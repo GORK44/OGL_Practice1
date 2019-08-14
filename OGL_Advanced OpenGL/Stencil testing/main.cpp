@@ -195,7 +195,7 @@ int main()
     glBindVertexArray(cubeVAO); //绑定VAO
 
     glBindBuffer(GL_ARRAY_BUFFER, cubeVBO); //把顶点缓冲对象绑定到GL_ARRAY_BUFFER（顶点缓冲对象的缓冲类型）目标上
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //把 顶点数据vertices 复制到缓冲的内存中
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW); //把 顶点数据vertices 复制到缓冲的内存中
     //glBufferData参数：目标缓冲的类型（顶点缓冲），大小，数据，数据不会或几乎不会改变。
 
     
@@ -281,7 +281,6 @@ int main()
 //    Model ourModel("/书/OGL_Test/nanosuit/nanosuit.obj");
     
     
-    
     //    lightingShader.use(); //use 对应的着色器程序（来设定uniform）
     //    lightingShader.setInt("material.diffuse", 0); //将要用的纹理单元赋值到material.diffuse这个uniform采样器
     //    lightingShader.setInt("material.specular", 1); //将要用的纹理单元赋值到material.specular这个uniform采样器
@@ -291,7 +290,7 @@ int main()
     myShader.setInt("texture1", 0);
     
     Shader singleColorShader("/书/OGL_Test/singleColor.vs", "/书/OGL_Test/singleColor.fs");
-    
+    Shader singleColorShader2("/书/OGL_Test/singleColor.vs", "/书/OGL_Test/lampFS.fs");
     //========================================================================
     
     
@@ -351,68 +350,6 @@ int main()
         //=========================================================================
 
         
-//        // set uniforms
-//        singleColorShader.use();
-//        glm::mat4 model = glm::mat4(1.0f);
-//        glm::mat4 view = camera.GetViewMatrix();
-//        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-//        singleColorShader.setMat4("view", view);
-//        singleColorShader.setMat4("projection", projection);
-//
-//        myShader.use();
-//        myShader.setMat4("view", view);
-//        myShader.setMat4("projection", projection);
-//
-//        // draw floor as normal, but don't write the floor to the stencil buffer, we only care about the containers. We set its mask to 0x00 to not write to the stencil buffer.
-//        glStencilMask(0x00);
-//        // floor
-//        glBindVertexArray(planeVAO);
-//        glBindTexture(GL_TEXTURE_2D, floorTexture);
-//        myShader.setMat4("model", glm::mat4(1.0f));
-//        glDrawArrays(GL_TRIANGLES, 0, 6);
-//        glBindVertexArray(0);
-//
-//        // 1st. render pass, draw objects as normal, writing to the stencil buffer
-//        // --------------------------------------------------------------------
-//        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-//        glStencilMask(0xFF);
-//        // cubes
-//        glBindVertexArray(cubeVAO);
-//        glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL_TEXTURE_2D, cubeTexture);
-//        model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
-//        myShader.setMat4("model", model);
-//        glDrawArrays(GL_TRIANGLES, 0, 36);
-//        model = glm::mat4(1.0f);
-//        model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
-//        myShader.setMat4("model", model);
-//        glDrawArrays(GL_TRIANGLES, 0, 36);
-//
-//        // 2nd. render pass: now draw slightly scaled versions of the objects, this time disabling stencil writing.
-//        // Because the stencil buffer is now filled with several 1s. The parts of the buffer that are 1 are not drawn, thus only drawing
-//        // the objects' size differences, making it look like borders.
-//        // -----------------------------------------------------------------------------------------------------------------------------
-//        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-//        glStencilMask(0x00);
-//        glDisable(GL_DEPTH_TEST);
-//        singleColorShader.use();
-//        float scale = 1.1;
-//        // cubes
-//        glBindVertexArray(cubeVAO);
-//        glBindTexture(GL_TEXTURE_2D, cubeTexture);
-//        model = glm::mat4(1.0f);
-//        model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
-//        model = glm::scale(model, glm::vec3(scale, scale, scale));
-//        singleColorShader.setMat4("model", model);
-//        glDrawArrays(GL_TRIANGLES, 0, 36);
-//        model = glm::mat4(1.0f);
-//        model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
-//        model = glm::scale(model, glm::vec3(scale, scale, scale));
-//        singleColorShader.setMat4("model", model);
-//        glDrawArrays(GL_TRIANGLES, 0, 36);
-//        glBindVertexArray(0);
-//        glStencilMask(0xFF);
-//        glEnable(GL_DEPTH_TEST);
 
         
 
@@ -421,16 +358,12 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-        
         myShader.use();
         myShader.setMat4("view", view);
         myShader.setMat4("projection", projection);
 
-        
-
-
-        // draw floor as normal, but don't write the floor to the stencil buffer, we only care about the containers. We set its mask to 0x00 to not write to the stencil buffer.
-        glStencilMask(0x00);
+        // 绘制地板，但不要将地板写入模板缓冲区。 我们将其掩码设置为0x00以不写入模板缓冲区。
+        glStencilMask(0x00);// 每一位在写入模板缓冲时都会变成0（禁用写入）(将要写入缓冲的模板值进行与(AND)运算)
         // floor
         glBindVertexArray(planeVAO);
         glActiveTexture(GL_TEXTURE0);
@@ -442,15 +375,15 @@ int main()
 
         // 1st. render pass, draw objects as normal, writing to the stencil buffer
         // --------------------------------------------------------------------
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilMask(0xFF);
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);//模版函数（总是写入参考值，参考值，掩码）
+        glStencilMask(0xFF);// 每一位写入模板缓冲时都保持原样（在绘制片段的地方，模板缓冲会被更新为参考值）
         // cubes
         glBindVertexArray(cubeVAO);
         glBindTexture(GL_TEXTURE_2D, cubeTexture);
         model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
         myShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
-
+        
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
         myShader.setMat4("model", model);
@@ -466,9 +399,9 @@ int main()
         // Because the stencil buffer is now filled with several 1s. The parts of the buffer that are 1 are not drawn, thus only drawing
         // the objects' size differences, making it look like borders.
         // -----------------------------------------------------------------------------------------------------------------------------
-        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-        glStencilMask(0x00);
-        glDisable(GL_DEPTH_TEST);
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);//模版函数（模版值 不等于 参考值1 时写入参考值，参考值，掩码）
+        glStencilMask(0x00);// 每一位在写入模板缓冲时都会变成0（禁用写入）(将要写入缓冲的模板值进行与(AND)运算)
+        glDisable(GL_DEPTH_TEST);//禁用了深度测试
         singleColorShader.use();
         float scale = 1.1;
         // cubes
@@ -485,126 +418,13 @@ int main()
         singleColorShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
-        glStencilMask(0xFF);
-        glEnable(GL_DEPTH_TEST);
+        glStencilMask(0xFF);// 每一位写入模板缓冲时都保持原样（在绘制片段的地方，模板缓冲会被更新为参考值）
+        glEnable(GL_DEPTH_TEST);//重新启用深度测试
+        
+        
+        
         
 
-
-
-
-        // 绘制物体
-        // ------------
-//        lightingShader.use(); //use 对应的着色器程序（来设定uniform）
-//        lightingShader.setFloat("material.shininess", 32.0f); //镜面高光的散射/半径
-//        lightingShader.setVec3("viewPos", camera.Position); //设定uniform（相机位置）
-//
-//
-//        // 定向光 directional light
-//        lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-//        lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-//        //        lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-//        lightingShader.setVec3("dirLight.diffuse", 0.0f, 0.4f, 0.0f);
-//        lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
-//
-//        // 点光源 point light 1
-//        lightingShader.setVec3("pointLights[0].position", pointLightPositions[0]);
-//        lightingShader.setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
-//        lightingShader.setVec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
-//        lightingShader.setVec3("pointLights[0].specular", 1.0f, 1.0f, 1.0f);
-//        lightingShader.setFloat("pointLights[0].constant", 1.0f);
-//        lightingShader.setFloat("pointLights[0].linear", 0.09);
-//        lightingShader.setFloat("pointLights[0].quadratic", 0.032);
-//        // point light 2
-//        lightingShader.setVec3("pointLights[1].position", pointLightPositions[1]);
-//        lightingShader.setVec3("pointLights[1].ambient", 0.05f, 0.05f, 0.05f);
-//        lightingShader.setVec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
-//        lightingShader.setVec3("pointLights[1].specular", 1.0f, 1.0f, 1.0f);
-//        lightingShader.setFloat("pointLights[1].constant", 1.0f);
-//        lightingShader.setFloat("pointLights[1].linear", 0.09);
-//        lightingShader.setFloat("pointLights[1].quadratic", 0.032);
-//        // point light 3
-//        lightingShader.setVec3("pointLights[2].position", pointLightPositions[2]);
-//        lightingShader.setVec3("pointLights[2].ambient", 0.05f, 0.05f, 0.05f);
-//        lightingShader.setVec3("pointLights[2].diffuse", 0.8f, 0.8f, 0.8f);
-//        lightingShader.setVec3("pointLights[2].specular", 1.0f, 1.0f, 1.0f);
-//        lightingShader.setFloat("pointLights[2].constant", 1.0f);
-//        lightingShader.setFloat("pointLights[2].linear", 0.09);
-//        lightingShader.setFloat("pointLights[2].quadratic", 0.032);
-//        // point light 4
-//        lightingShader.setVec3("pointLights[3].position", pointLightPositions[3]);
-//        lightingShader.setVec3("pointLights[3].ambient", 0.05f, 0.05f, 0.05f);
-//        lightingShader.setVec3("pointLights[3].diffuse", 0.8f, 0.8f, 0.8f);
-//        lightingShader.setVec3("pointLights[3].specular", 1.0f, 1.0f, 1.0f);
-//        lightingShader.setFloat("pointLights[3].constant", 1.0f);
-//        lightingShader.setFloat("pointLights[3].linear", 0.09);
-//        lightingShader.setFloat("pointLights[3].quadratic", 0.032);
-//
-//        // 聚光 spotLight
-//        lightingShader.setVec3("spotLight.position", camera.Position);
-//        lightingShader.setVec3("spotLight.direction", camera.Front);
-//        lightingShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-//        lightingShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-//        lightingShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
-//        lightingShader.setFloat("spotLight.constant", 1.0f);
-//        lightingShader.setFloat("spotLight.linear", 0.09);
-//        lightingShader.setFloat("spotLight.quadratic", 0.032);
-//        lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-//        lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
-//
-//
-//
-//
-//        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f); //投影矩阵
-//        glm::mat4 view = camera.GetViewMatrix(); //观察变换矩阵
-//        lightingShader.setMat4("projection", projection); //将 投影矩阵 传给着色器
-//        lightingShader.setMat4("view", view); //将 观察变换矩阵 传给着色器
-//
-//        glm::mat4 model = glm::mat4(1.0f); //初始化矩阵
-//        lightingShader.setMat4("model", model); //将 模型变换矩阵 传给着色器
-//
-//
-//        // 在相应的纹理单元上绑定纹理 bind textures on corresponding texture units
-//        glActiveTexture(GL_TEXTURE0); // 先激活纹理单元
-//        glBindTexture(GL_TEXTURE_2D, cubeTexture); //绑定纹理
-//        glActiveTexture(GL_TEXTURE1); // 先激活纹理单元
-//        glBindTexture(GL_TEXTURE_2D, floorTexture); //绑定纹理
-//
-//
-//
-//        //-----------
-//
-//
-//        // 绘制光源立方体 also draw the lamp object
-//        lampShader.use();
-//        lampShader.setMat4("projection", projection); //将 投影矩阵 传给着色器
-//        lampShader.setMat4("view", view); //将 观察变换矩阵 传给着色器
-//
-//        // we now draw as many light bulbs as we have point lights.
-//        glBindVertexArray(lightVAO); // 在绘制物体前简单地把VAO绑定到希望使用的设定上
-//        for (unsigned int i = 0; i < 4; i++) //画四个点光源
-//        {
-//            model = glm::mat4(1.0f); //初始化
-//            model = glm::translate(model, pointLightPositions[i]); //模型变换：位移
-//            model = glm::scale(model, glm::vec3(0.2f)); // 模型变换：缩放
-//            lampShader.setMat4("model", model); //将 模型变换矩阵 传给着色器
-//            glDrawArrays(GL_TRIANGLES, 0, 36); // 绘制三角形，起始索引为0，顶点数36
-//        }
-//
-//
-//
-//        // don't forget to enable shader before setting uniforms
-//        ourShader.use();
-//
-//        // view/projection transformations
-//        ourShader.setMat4("projection", projection);
-//        ourShader.setMat4("view", view);
-//
-//        // render the loaded model
-//        model = glm::mat4(1.0f);
-//        model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f)); // translate it down so it's at the center of the scene
-//        model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));    // it's a bit too big for our scene, so scale it down
-//        ourShader.setMat4("model", model);
-//        ourModel.Draw(ourShader);
 
 
 
