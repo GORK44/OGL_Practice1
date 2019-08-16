@@ -93,17 +93,6 @@ int main()
 
 
 
-
-
-
-    //配置全局opengl状态
-    //========================================================================
-//    glEnable(GL_DEPTH_TEST); // 启用深度测试
-//    glDepthFunc(GL_ALWAYS); // always pass the depth test (same effect as glDisable(GL_DEPTH_TEST))
-    //========================================================================
-
-
-
     
 
 
@@ -282,7 +271,7 @@ int main()
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glBindVertexArray(0);
     
-    // screen quad VAO
+    // screen quad VAO（帧缓冲屏幕四边形）
     unsigned int quadVAO, quadVBO;
     glGenVertexArrays(1, &quadVAO);
     glGenBuffers(1, &quadVBO);
