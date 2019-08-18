@@ -10,5 +10,5 @@ void main()
 {
     TexCoords = aPos;
     vec4 pos = projection * view * vec4(aPos, 1.0);
-    gl_Position = pos.xyww;
+    gl_Position = pos.xyww; // w保存的是观察空间z，这里把z设置为w，之后透视除法除以w，得到NDC中z = 1（最大深度值）
 }  

@@ -207,7 +207,7 @@ int main()
         1.0f,  1.0f,  1.0f, 1.0f
     };
     
-    
+    //天空盒
     float skyboxVertices[] = {
         // positions
         -1.0f,  1.0f, -1.0f,
