@@ -417,55 +417,54 @@ int main()
     
     
     //========================================================================
-    // generate a large list of semi-random model transformation matrices
+    // （实例化小行星）生成大型半随机模型变换矩阵列表（为每个小行星生成一个变换矩阵，用作它们的模型矩阵）
     // ------------------------------------------------------------------
     unsigned int amount = 1000;
     glm::mat4* modelMatrices;
-    modelMatrices = new glm::mat4[amount];
-    srand(glfwGetTime()); // initialize random seed
+    modelMatrices = new glm::mat4[amount]; //模型矩阵数组
+    srand(glfwGetTime()); // 初始化随机种子 initialize random seed
     float radius = 15.0;
     float offset = 2.50f;
     for (unsigned int i = 0; i < amount; i++)
     {
         glm::mat4 model = glm::mat4(1.0f);
-        // 1. translation: displace along circle with 'radius' in range [-offset, offset]
-        float angle = (float)i / (float)amount * 360.0f;
-        float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+        // 1. 位移：分布在半径为 'radius' 的圆形上，偏移的范围是 [-offset, offset]
+        float angle = (float)i / (float)amount * 360.0f; // 围绕圆的角度
+        float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset; //偏移的范围是 [-offset, offset]（offset*100是为了转换成int）
         float x = sin(angle) * radius + displacement;
         displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-        float y = displacement * 0.4f; // keep height of asteroid field smaller compared to width of x and z
+        float y = displacement * 0.4f; // 让行星带的高度比x和z的宽度要小
         displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
         float z = cos(angle) * radius + displacement;
         model = glm::translate(model, glm::vec3(x, y, z));
         
-        // 2. scale: Scale between 0.05 and 0.25f
+        // 2. 缩放：在 0.05 和 0.25f 之间缩放
         float scale = (rand() % 20) / 100.0f + 0.05;
         model = glm::scale(model, glm::vec3(scale));
         
-        // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
+        // 3. 旋转：绕着一个（半）随机选择的旋转轴向量进行随机的旋转
         float rotAngle = (rand() % 360);
         model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
         
-        // 4. now add to list of matrices
+        // 4. 添加到矩阵的数组中
         modelMatrices[i] = model;
     }
     
-    // configure instanced array
+    // 配置实例化数组
     // -------------------------
     unsigned int buffer;
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+    glGenBuffers(1, &buffer); //创建1个 顶点缓冲对象
+    glBindBuffer(GL_ARRAY_BUFFER, buffer); //把顶点缓冲对象绑定到GL_ARRAY_BUFFER（顶点缓冲对象的缓冲类型）目标上
+    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);//把 顶点数据modelMatrices 复制到缓冲的内存中
+    //glBufferData参数：目标缓冲的类型（顶点缓冲），大小，数据，数据不会或几乎不会改变。
     
-    // set transformation matrices as an instance vertex attribute (with divisor 1)
-    // note: we're cheating a little by taking the, now publicly declared, VAO of the model's mesh(es) and adding new vertexAttribPointers
-    // normally you'd want to do this in a more organized fashion, but for learning purposes this will do.
-    // -----------------------------------------------------------------------------------------------------------------------------------
+    // 将变换矩阵设置为实例顶点属性（使用Divisor除数1）
+    // -------------------------
     for (unsigned int i = 0; i < rock.meshes.size(); i++)
     {
         unsigned int VAO = rock.meshes[i].VAO;
         glBindVertexArray(VAO);
-        // set attribute pointers for matrix (4 times vec4)
+        // 设置矩阵的属性指针（4个vec4）
         glEnableVertexAttribArray(3);
         glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
         glEnableVertexAttribArray(4);
@@ -475,6 +474,7 @@ int main()
         glEnableVertexAttribArray(6);
         glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
         
+        //把属性除数设置为1，我们可以高效地告诉OpenGL，location是3456的顶点属性是一个实例数组（instanced array）。
         glVertexAttribDivisor(3, 1);
         glVertexAttribDivisor(4, 1);
         glVertexAttribDivisor(5, 1);
@@ -574,7 +574,7 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
         
         
-        // draw planet
+        // 绘制行星 draw planet
         planetShader.use();
         planetShader.setMat4("projection", projection);
         planetShader.setMat4("view", view);
@@ -586,14 +586,14 @@ int main()
         planet.Draw(planetShader);
         
         
-        // draw meteorites
+        // 绘制小行星 draw asteroid
         asteroidShader.use();
         asteroidShader.setMat4("projection", projection);
         asteroidShader.setMat4("view", view);
         
         asteroidShader.setInt("texture_diffuse1", 0);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, rock.textures_loaded[0].id); // note: we also made the textures_loaded vector public (instead of private) from the model class.
+        glBindTexture(GL_TEXTURE_2D, rock.textures_loaded[0].id); // 注意：我们还从模型类中将textures_loaded向量设置为public（而不是private）。
         for (unsigned int i = 0; i < rock.meshes.size(); i++)
         {
             glBindVertexArray(rock.meshes[i].VAO);
@@ -680,7 +680,7 @@ int main()
         
         
         // 绘制天空盒 draw skybox as last
-//        glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+//        glDepthFunc(GL_LEQUAL);  // 更改深度函数，以便深度测试在值等于深度缓冲区最大值时通过
 //        skyboxShader.use();
 //        view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // 将观察矩阵转换为3x3矩阵（移除位移），再将其转换回4x4矩阵
 //        skyboxShader.setMat4("view", view);
