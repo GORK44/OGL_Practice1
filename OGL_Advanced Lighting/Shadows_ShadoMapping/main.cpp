@@ -370,28 +370,30 @@ int main()
     
     
     //========================================================================
-    // 生成一张深度贴图(Depth Map)
+    // 生成一张深度贴图(Depth Map)（帧缓冲）
     //-----------------------------------------------------
-    // configure depth map FBO
+    // 配置深度贴图 configure depth map FBO
     // -----------------------
     const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
     unsigned int depthMapFBO;
-    glGenFramebuffers(1, &depthMapFBO);
+    glGenFramebuffers(1, &depthMapFBO); //创建一个帧缓冲对象
     // create depth texture
     unsigned int depthMap;
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glGenTextures(1, &depthMap);//生成 1 个纹理，保存ID到
+    glBindTexture(GL_TEXTURE_2D, depthMap);// 绑定纹理，接下来所有GL_TEXTURE_2D操作都是对此纹理
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);//生成一个纹理
+    //参数：纹理目标GL_TEXTURE_2D，Mipmap级别0，纹理存储为RGB格式，宽度，高度，历史遗留总是0，使用RGB值加载，储存为char(byte)数组，图像数据（不初始化）
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);//就近过滤
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//边缘重复
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // attach depth texture as FBO's depth buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // 将深度纹理附加为FBO的深度缓冲区 attach depth texture as FBO's depth buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);//将它绑定为激活的(Active)帧缓冲，做一些操作，之后解绑帧缓冲。
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);//把纹理附加到帧缓冲
+    //参数：缓冲的目标，附加一个颜色附件，附加的纹理类型，附加的纹理本身，多级渐远纹理的级别0
+    glDrawBuffer(GL_NONE); //帧缓冲对象不是完全不包含颜色缓冲，所以我们需要显式告诉OpenGL我们不适用任何颜色数据进行渲染
+    glReadBuffer(GL_NONE); //帧缓冲对象不是完全不包含颜色缓冲，所以我们需要显式告诉OpenGL我们不适用任何颜色数据进行渲染
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);//解绑帧缓冲
     
     
     // shader configuration
@@ -573,31 +575,31 @@ int main()
         // -----------------------------------------
         
         
-        // 1. render depth of scene to texture (from light's perspective)
+        // 1. 渲染场景深度到纹理（从光的角度来看）render depth of scene to texture (from light's perspective)
         // --------------------------------------------------------------
-        glm::mat4 lightProjection, lightView;
-        glm::mat4 lightSpaceMatrix;
+        glm::mat4 lightProjection, lightView; //光的 正交投影矩阵，观察矩阵
+        glm::mat4 lightSpaceMatrix; // 正交投影矩阵 X 观察矩阵
         float near_plane = 1.0f, far_plane = 7.5f;
-        lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-        lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-        lightSpaceMatrix = lightProjection * lightView;
-        // render scene from light's point of view
+        lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);//光的 正交投影矩阵
+        lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));// 光的 观察矩阵
+        lightSpaceMatrix = lightProjection * lightView;// 正交投影矩阵 X 观察矩阵
+        // 从光的角度渲染场景
         simpleDepthShader.use();
         simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        
+
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);//之后所有的渲染操作将会渲染到当前绑定帧缓冲的附件中
         glClear(GL_DEPTH_BUFFER_BIT);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, floorTexture);
-        renderScene(simpleDepthShader);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        
-        // reset viewport
+        renderScene(simpleDepthShader);//由于我们的帧缓冲不是默认帧缓冲，渲染指令将不会对窗口的视觉输出有任何影响
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); //再次激活默认帧缓冲
+
+        // 重置视口reset viewport
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        // render Depth map to quad for visual debugging
+
+        // 渲染 深度贴图 到 屏幕四边形 以进行可视化调试 render Depth map to quad for visual debugging
         // ---------------------------------------------
         debugDepthQuad.use();
         debugDepthQuad.setFloat("near_plane", near_plane);
@@ -608,7 +610,11 @@ int main()
         
         
         
-//        // configure transformation matrices
+        
+        
+        
+        
+        // configure transformation matrices
 //        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 //        glm::mat4 view = camera.GetViewMatrix();
 //
