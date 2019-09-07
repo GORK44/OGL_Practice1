@@ -17,15 +17,15 @@ uniform vec3 viewPos;
 
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
-    // perform perspective divide
+    // 齐次除法：xyz分别除以w，得到NDC。 （xy范围[-1,1]）（片元在光照角度下的坐标）
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    // transform to [0,1] range
+    // 转换到 [0,1] 范围 （片元在光照角度下坐标）
     projCoords = projCoords * 0.5 + 0.5;
-    // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+    // 按 片元在光照角度下的坐标xy ，获得 深度贴图 中保存的 最近深度
     float closestDepth = texture(shadowMap, projCoords.xy).r;
-    // get depth of current fragment from light's perspective
+    // 从光的角度获取当前片段的深度
     float currentDepth = projCoords.z;
-    // check whether current frag pos is in shadow
+    // 检查当前的 片段 是否在阴影中（ 片段深度 小于 对应深度贴图中最近深度 ）
     float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
     
     return shadow;
@@ -52,7 +52,7 @@ void main()
     vec3 halfwayDir = normalize(lightDir + viewDir);
     spec = pow(max(dot(normal, halfwayDir), 0.0), 64.0);
     vec3 specular = spec * lightColor;
-    // calculate shadow
+    // 计算阴影
     float shadow = ShadowCalculation(fs_in.FragPosLightSpace);
     vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
     

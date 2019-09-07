@@ -504,7 +504,7 @@ int main()
 //    unsigned int diffuseMap = loadTexture("/书/OGL_Test/im.png");
 //    unsigned int specularMap = loadTexture("/书/OGL_Test/container2_specular.jpg");
     unsigned int cubeTexture  = loadTexture("/书/OGL_Test/container.jpg",true);
-    unsigned int floorTexture = loadTexture("/书/OGL_Test/wood.png",true);
+    unsigned int woodTexture = loadTexture("/书/OGL_Test/wood.png",true);
     unsigned int transparentTexture = loadTexture("/书/OGL_Test/blending.png",false);
     
     vector<std::string> faces
@@ -534,7 +534,7 @@ int main()
     
 
 
-    // 光向量信息 lighting info
+    // 定向光的光源坐标 lighting info
     // -------------
 //    glm::vec3 lightPos(-1.0f, 3.0f, 0.0f);
     glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
@@ -599,7 +599,7 @@ int main()
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);//之后所有的渲染操作将会渲染到当前绑定帧缓冲的附件中
         glClear(GL_DEPTH_BUFFER_BIT);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, floorTexture);
+        glBindTexture(GL_TEXTURE_2D, woodTexture);
         renderScene(simpleDepthShader);//由于我们的帧缓冲不是默认帧缓冲，渲染指令将不会对窗口的视觉输出有任何影响
         glBindFramebuffer(GL_FRAMEBUFFER, 0); //再次激活默认帧缓冲
 
@@ -609,7 +609,7 @@ int main()
         
         
         
-        // 2. render scene as normal using the generated depth/shadow map
+        // 2. 使用生成的深度/阴影贴图正常渲染场景
         // --------------------------------------------------------------
         shadowMappingShader.use();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -621,10 +621,10 @@ int main()
         shadowMappingShader.setVec3("lightPos", lightPos);
         shadowMappingShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
+        glBindTexture(GL_TEXTURE_2D, depthMap); //深度贴图（光照方向）
         glUniform1i(glGetUniformLocation(shadowMappingShader.ID, "shadowMap"), 0);
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, floorTexture);
+        glBindTexture(GL_TEXTURE_2D, woodTexture);
         glUniform1i(glGetUniformLocation(shadowMappingShader.ID, "diffuseTexture"), 1);
         renderScene(shadowMappingShader);
 
