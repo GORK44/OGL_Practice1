@@ -516,7 +516,7 @@ int main()
     unsigned int cubeTexture  = loadTexture("/书/OGL_Test/container.jpg",true,true);
     unsigned int woodTexture = loadTexture("/书/OGL_Test/wood.png",true,true);
     unsigned int transparentTexture = loadTexture("/书/OGL_Test/blending.png",true,false);
-    unsigned int brickWallTexture = loadTexture("/书/OGL_Test/brickwall.jpg",false,true);
+    unsigned int brickWallTexture = loadTexture("/书/OGL_Test/brickwall.jpg",true,true);
     unsigned int brickWall_Normal_Texture = loadTexture("/书/OGL_Test/brickwall_normal.jpg",true,true);
     
     vector<std::string> faces
@@ -598,7 +598,7 @@ int main()
         
         
         
-        // configure view/projection matrices
+        // 配置观察/投影矩阵 configure view/projection matrices
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         normalMapShader.use();
@@ -618,7 +618,7 @@ int main()
         glUniform1i(glGetUniformLocation(normalMapShader.ID, "normalMap"), 1);
         renderQuad();
         
-        // render light source (simply re-renders a smaller plane at the light's position for debugging/visualization)
+        // 画光源 render light source (simply re-renders a smaller plane at the light's position for debugging/visualization)
         whiteShader.use();
         whiteShader.setMat4("projection", projection);
         whiteShader.setMat4("view", view);
@@ -626,68 +626,11 @@ int main()
         model = glm::translate(model, lightPos);
         model = glm::scale(model, glm::vec3(0.1f));
         whiteShader.setMat4("model", model);
-        renderQuad();
+        glBindVertexArray(lightVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
         
         
-        
-//        // 1. 渲染场景深度到纹理（从光的角度来看）render depth of scene to texture (from light's perspective)
-//        // --------------------------------------------------------------
-//        glm::mat4 lightProjection, lightView; //光的 正交投影矩阵，观察矩阵
-//        glm::mat4 lightSpaceMatrix; // 正交投影矩阵 X 观察矩阵
-//        float near_plane = 1.0f, far_plane = 7.5f;
-//        lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);//光的 正交投影矩阵
-//        lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));// 光的 观察矩阵
-//        lightSpaceMatrix = lightProjection * lightView;// 正交投影矩阵 X 观察矩阵
-//
-//        // 从光的角度渲染场景
-//        simpleDepthShader.use();
-//        simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-//
-//        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-//        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);//之后所有的渲染操作将会渲染到当前绑定帧缓冲的附件中
-//        glClear(GL_DEPTH_BUFFER_BIT);
-//        glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL_TEXTURE_2D, woodTexture);
-//        renderScene(simpleDepthShader);//由于我们的帧缓冲不是默认帧缓冲，渲染指令将不会对窗口的视觉输出有任何影响
-//        glBindFramebuffer(GL_FRAMEBUFFER, 0); //再次激活默认帧缓冲
-//
-//        // 重置视口reset viewport
-//        glViewport(0, 0, SCR_WIDTH*2, SCR_HEIGHT*2);//mac属于视网膜显示屏 ，存储到framebuffer viewport 尺寸与framebuffer关联texture2d尺寸相同，但输出到屏幕则viewport尺寸要扩大两倍以适应视网膜显示器
-//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//
-//
-//        // 2. 使用生成的深度/阴影贴图正常渲染场景
-//        // --------------------------------------------------------------
-//        shadowMappingShader.use();
-//        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-//        glm::mat4 view = camera.GetViewMatrix();
-//        shadowMappingShader.setMat4("projection", projection);
-//        shadowMappingShader.setMat4("view", view);
-//        // set light uniforms
-//        shadowMappingShader.setVec3("viewPos", camera.Position);
-//        shadowMappingShader.setVec3("lightPos", lightPos);
-//        shadowMappingShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-//        glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL_TEXTURE_2D, depthMap); //深度贴图（光照方向）
-//        glUniform1i(glGetUniformLocation(shadowMappingShader.ID, "shadowMap"), 0);
-//        glActiveTexture(GL_TEXTURE1);
-//        glBindTexture(GL_TEXTURE_2D, woodTexture);
-//        glUniform1i(glGetUniformLocation(shadowMappingShader.ID, "diffuseTexture"), 1);
-//        renderScene(shadowMappingShader);
-//
-//
-//
-//        // 渲染 深度贴图 到 屏幕四边形 以进行可视化调试 render Depth map to quad for visual debugging
-//        // ---------------------------------------------
-//        debugDepthQuad.use();
-//        debugDepthQuad.setFloat("near_plane", near_plane);
-//        debugDepthQuad.setFloat("far_plane", far_plane);
-//        glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL_TEXTURE_2D, depthMap);
-////        renderQuad();
-        
-        
+   
         
         
         
@@ -916,7 +859,10 @@ void renderQuad()
         // normal vector
         glm::vec3 nm(0.0f, 0.0f, 1.0f);
         
-        // calculate tangent/bitangent vectors of both triangles
+        
+        
+        // 计算两个三角形的切线/副切线向量 calculate tangent/bitangent vectors of both triangles
+        // ==================================================================================
         glm::vec3 tangent1, bitangent1;
         glm::vec3 tangent2, bitangent2;
         // triangle 1
@@ -957,17 +903,20 @@ void renderQuad()
         bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
         bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
         bitangent2 = glm::normalize(bitangent2);
+        // ==================================================================================
+        
+        
         
         
         float quadVertices[] = {
-            // positions            // normal         // texcoords  // tangent                          // bitangent
-            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
-            pos2.x, pos2.y, pos2.z, nm.x, nm.y, nm.z, uv2.x, uv2.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
-            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+            // positions                // normal           // texcoords    // tangent                              // bitangent
+            pos1.x, pos1.y, pos1.z,     nm.x, nm.y, nm.z,   uv1.x, uv1.y,   tangent1.x, tangent1.y, tangent1.z,     bitangent1.x, bitangent1.y, bitangent1.z,
+            pos2.x, pos2.y, pos2.z,     nm.x, nm.y, nm.z,   uv2.x, uv2.y,   tangent1.x, tangent1.y, tangent1.z,     bitangent1.x, bitangent1.y, bitangent1.z,
+            pos3.x, pos3.y, pos3.z,     nm.x, nm.y, nm.z,   uv3.x, uv3.y,   tangent1.x, tangent1.y, tangent1.z,     bitangent1.x, bitangent1.y, bitangent1.z,
             
-            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
-            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
-            pos4.x, pos4.y, pos4.z, nm.x, nm.y, nm.z, uv4.x, uv4.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z
+            pos1.x, pos1.y, pos1.z,     nm.x, nm.y, nm.z,   uv1.x, uv1.y,   tangent2.x, tangent2.y, tangent2.z,     bitangent2.x, bitangent2.y, bitangent2.z,
+            pos3.x, pos3.y, pos3.z,     nm.x, nm.y, nm.z,   uv3.x, uv3.y,   tangent2.x, tangent2.y, tangent2.z,     bitangent2.x, bitangent2.y, bitangent2.z,
+            pos4.x, pos4.y, pos4.z,     nm.x, nm.y, nm.z,   uv4.x, uv4.y,   tangent2.x, tangent2.y, tangent2.z,     bitangent2.x, bitangent2.y, bitangent2.z
         };
         // configure plane VAO
         glGenVertexArrays(1, &quadVAO);
