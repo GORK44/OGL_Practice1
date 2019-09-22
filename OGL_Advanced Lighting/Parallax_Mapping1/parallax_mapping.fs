@@ -39,14 +39,33 @@ vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)//（输出：视差偏移后�
     while(currentLayerDepth < currentDepthMapValue) //当前样本的深度 < 当前uv对应的深度值
     {
         // 沿P方向移动纹理坐标 shift texture coordinates along direction of P
-        currentTexCoords -= deltaTexCoords; // 减去 每层的uv坐标偏移量
+        currentTexCoords -= deltaTexCoords; // 减去 每层的uv坐标偏移量（方向远离相机）
         // 获取当前纹理坐标处的depthmap值 get depthmap value at current texture coordinates
         currentDepthMapValue = texture(depthMap, currentTexCoords).r;
         // 获取下一层的深度 get depth of next layer
         currentLayerDepth += layerDepth;
     }
     
-    return currentTexCoords; //当前样本的深度 >= 当前uv对应的深度值，返回
+    //    return currentTexCoords; //当前样本的深度 >= 当前uv对应的深度值，返回
+    
+
+    //----------------------------------------------------------------
+    //视差遮蔽映射(Parallax Occlusion Mapping) （处理锯齿效果以及图层之间有明显的断层）在触碰 样本深度层 之前和之后，在 深度层 之间进行 线性插值。
+    // 获得上一个深度层时纹理坐标（反向操作） get texture coordinates before collision (reverse operations)
+    vec2 prevTexCoords = currentTexCoords + deltaTexCoords; //加上 每层的uv坐标偏移量（方向朝向相机）
+    
+    // 获取碰撞前后深度层的深度以进行线性插值 get depth after and before collision for linear interpolation
+    float afterDepth  = currentDepthMapValue - currentLayerDepth; // 当前uv对应的深度值 - 当前样本的深度
+    float beforeDepth = texture(depthMap, prevTexCoords).r - currentLayerDepth + layerDepth;//上一个uv对应的深度值 - 上个样本的深度
+    
+    // 纹理坐标插值 interpolation of texture coordinates
+    float weight = afterDepth / (afterDepth - beforeDepth); // 上一个偏移uv对应的深度的权重
+    vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);//线性插值，得到偏移uv坐标
+    //----------------------------------------------------------------
+    
+    
+    return finalTexCoords; //返回最终偏移后的uv坐标
+
 }
 
 void main()
