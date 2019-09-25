@@ -27,7 +27,7 @@ void processInput(GLFWwindow *window); //输入控制
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);//鼠标移动控制方向
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);//滚轮控制FOV
 
-unsigned int loadTexture(const char *path, bool isFliped, bool isRepeated);//加载纹理贴图
+unsigned int loadTexture(const char *path, bool isFliped, bool isRepeated, bool gammaCorrection);//加载纹理贴图（反转，边缘重复，sRBG纹理gamma矫正）
 unsigned int loadCubemap(vector<std::string> faces);//加载立方体贴图
 
 
@@ -60,7 +60,7 @@ float heightScale = 0.1; //视差映射
 //HDR
 bool hdr = true;
 bool hdrKeyPressed = false;
-float exposure = 1.0f;
+float exposure = 0.3f;
 
 void renderCube();//HDR
 
@@ -387,13 +387,14 @@ int main()
     const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
     unsigned int depthMapFBO;
     glGenFramebuffers(1, &depthMapFBO); //创建一个帧缓冲对象
-    // create depth texture
+    
+    // 创建深度纹理 create depth texture
     unsigned int depthMap;
     glGenTextures(1, &depthMap);//生成 1 个纹理，保存ID到
     glBindTexture(GL_TEXTURE_2D, depthMap);// 绑定纹理，接下来所有GL_TEXTURE_2D操作都是对此纹理
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);//生成一个纹理
     //参数：纹理目标GL_TEXTURE_2D，Mipmap级别0，纹理存储为RGB格式，宽度，高度，历史遗留总是0，使用RGB值加载，储存为char(byte)数组，图像数据（不初始化）
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);//就近过滤
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);//放缩时 就近过滤
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     
     //让所有超出深度贴图的坐标的深度范围是1.0
@@ -424,31 +425,35 @@ int main()
     
     
     //========================================================================
-    // configure floating point framebuffer
+    // （HDR）配置浮点帧缓冲区 configure floating point framebuffer
     // ------------------------------------
     unsigned int hdrFBO;
-    glGenFramebuffers(1, &hdrFBO);
+    glGenFramebuffers(1, &hdrFBO); //创建一个帧缓冲对象
     // create floating point color buffer
     unsigned int colorBuffer;
-    glGenTextures(1, &colorBuffer);
-    glBindTexture(GL_TEXTURE_2D, colorBuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // create depth buffer (renderbuffer)
-    unsigned int rboDepth;
-    glGenRenderbuffers(1, &rboDepth);
-    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
-    // attach buffers
-    glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "Framebuffer not complete!" << std::endl;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glGenTextures(1, &colorBuffer); //生成 1 个纹理，保存ID到
+    glBindTexture(GL_TEXTURE_2D, colorBuffer); //绑定纹理，接下来所有GL_TEXTURE_2D操作都是对此纹理
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL); //生成一个纹理
+    //参数：纹理目标GL_TEXTURE_2D，Mipmap级别0，纹理存储为RGB格式，宽度，高度，历史遗留总是0，使用RGBA值加载，储存为float，图像数据（不初始化）
     
-    // lighting info
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //放缩时 就近过滤
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+    // 创建一个渲染缓冲对象 create depth buffer (renderbuffer)
+    unsigned int rboDepth;
+    glGenRenderbuffers(1, &rboDepth); //创建一个渲染缓冲对象，保存ID到rbo
+    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth); //绑定这个渲染缓冲对象，之后所有的渲染缓冲操作影响当前的rbo
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT); //创建一个 渲染缓冲对象
+    
+    // 附加缓冲区 attach buffers
+    glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO); //将它绑定为激活的(Active)帧缓冲，做一些操作，之后解绑帧缓冲。
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);//把纹理附加到帧缓冲
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth); //把rbo附加到帧缓冲的深度附件上
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) //检查帧缓冲是否完整
+        std::cout << "Framebuffer not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); //解绑帧缓冲
+    
+    // 照明信息 lighting info
     // -------------
     // positions
     std::vector<glm::vec3> lightPositions;
@@ -511,8 +516,8 @@ int main()
     //模型
     Shader modelShader("/书/OGL_Test/Shader/model.vs", "/书/OGL_Test/Shader/model.fs");
     Model person("/书/OGL_Test/nanosuit/nanosuit.obj");
-    Shader model_normal_Shader("/书/OGL_Test/Shader/modelVS.vs", "/书/OGL_Test/Shader/modelFS.fs");
-    Model personN("/书/OGL_Test/nanosuit/nanosuit.obj");
+//    Shader model_normal_Shader("/书/OGL_Test/Shader/modelVS.vs", "/书/OGL_Test/Shader/modelFS.fs");
+//    Model personN("/书/OGL_Test/nanosuit/nanosuit.obj");
     
     
     Shader screenShader("/书/OGL_Test/Shader/screen.vs", "/书/OGL_Test/Shader/screen.fs");//帧缓冲
@@ -588,19 +593,19 @@ int main()
     // ----------------------------------------------------------
 //    unsigned int diffuseMap = loadTexture("/书/OGL_Test/im.png");
 //    unsigned int specularMap = loadTexture("/书/OGL_Test/container2_specular.jpg");
-    unsigned int cubeTexture  = loadTexture("/书/OGL_Test/container.jpg",true,true);
-    unsigned int woodTexture = loadTexture("/书/OGL_Test/wood.png",true,true);
-    unsigned int transparentTexture = loadTexture("/书/OGL_Test/blending.png",true,false);
+    unsigned int cubeTexture  = loadTexture("/书/OGL_Test/container.jpg",true,true,true);
+    unsigned int woodTexture = loadTexture("/书/OGL_Test/wood.png",true,true,true);
+    unsigned int transparentTexture = loadTexture("/书/OGL_Test/blending.png",true,false,true);
     
-    unsigned int brickWallTexture = loadTexture("/书/OGL_Test/brickwall.jpg",true,true);
-    unsigned int brickWall_Normal_Texture = loadTexture("/书/OGL_Test/brickwall_normal.jpg",true,true);
+    unsigned int brickWallTexture = loadTexture("/书/OGL_Test/brickwall.jpg",true,true,true);
+    unsigned int brickWall_Normal_Texture = loadTexture("/书/OGL_Test/brickwall_normal.jpg",true,true,false);
     
-    unsigned int brickWallTexture2 = loadTexture("/书/OGL_Test/bricks2.jpg",true,true);
-    unsigned int brickWall_Normal_Texture2 = loadTexture("/书/OGL_Test/bricks2_normal.jpg",true,true);
-    unsigned int brickWall_Height_Texture2 = loadTexture("/书/OGL_Test/bricks2_disp.jpg",true,true);
+    unsigned int brickWallTexture2 = loadTexture("/书/OGL_Test/bricks2.jpg",true,true,true);
+    unsigned int brickWall_Normal_Texture2 = loadTexture("/书/OGL_Test/bricks2_normal.jpg",true,true,false);
+    unsigned int brickWall_Height_Texture2 = loadTexture("/书/OGL_Test/bricks2_disp.jpg",true,true,false);
     
-    unsigned int toyBox_Normal_Texture2 = loadTexture("/书/OGL_Test/toy_box_normal.png",true,true);
-    unsigned int toyBox_Height_Texture2 = loadTexture("/书/OGL_Test/toy_box_disp.png",true,true);
+    unsigned int toyBox_Normal_Texture2 = loadTexture("/书/OGL_Test/toy_box_normal.png",true,true,false);
+    unsigned int toyBox_Height_Texture2 = loadTexture("/书/OGL_Test/toy_box_disp.png",true,true,false);
     
     
     vector<std::string> faces
@@ -688,14 +693,15 @@ int main()
         glm::mat4 model = glm::mat4(1.0f);
         
         
+//===========================================================================================
         
-        exposure = sin(glfwGetTime()) + 1;
+        exposure = sin(glfwGetTime()) + 1;//曝光度
         
         
-        // 1. render scene into floating point framebuffer
-        // -----------------------------------------------
-        glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //1. 将场景渲染到浮点帧缓冲区 render scene into floating point framebuffer
+        //-----------------------------------------------
+        glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);//将它绑定为激活的(Active)帧缓冲，做一些操作，之后解绑帧缓冲。
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //清空屏幕的 颜色缓冲 和 深度缓冲
         projection = glm::perspective(glm::radians(camera.Zoom), (GLfloat)SCR_WIDTH / (GLfloat)SCR_HEIGHT, 0.1f, 100.0f);
         view = camera.GetViewMatrix();
         hdr_lighting_Shader.use();
@@ -703,24 +709,24 @@ int main()
         hdr_lighting_Shader.setMat4("view", view);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, woodTexture);
-        // set lighting uniforms
+        // 设置光源 set lighting uniforms
         for (unsigned int i = 0; i < lightPositions.size(); i++)
         {
             hdr_lighting_Shader.setVec3("lights[" + std::to_string(i) + "].Position", lightPositions[i]);
             hdr_lighting_Shader.setVec3("lights[" + std::to_string(i) + "].Color", lightColors[i]);
         }
         hdr_lighting_Shader.setVec3("viewPos", camera.Position);
-        // render tunnel
+        // 渲染隧道 render tunnel
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 25.0));
         model = glm::scale(model, glm::vec3(2.5f, 2.5f, 27.5f));
         hdr_lighting_Shader.setMat4("model", model);
-        hdr_lighting_Shader.setInt("inverse_normals", true);
+        hdr_lighting_Shader.setInt("inverse_normals", true);//反法线
         renderCube();
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        
-        // 2. now render floating point color buffer to 2D quad and tonemap HDR colors to default framebuffer's (clamped) color range
-        // --------------------------------------------------------------------------------------------------------------------------
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);//解绑帧缓冲
+
+        // 2. 现在将浮点颜色缓冲区渲染为2D四边形，并将色调映射HDR颜色渲染为默认帧缓冲区的（固定）颜色范围 now render floating point color buffer to 2D quad and tonemap HDR colors to default framebuffer's (clamped) color range
+        // ----------------------------------------------------------------------------------------
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         hdr_Shader.use();
         glActiveTexture(GL_TEXTURE0);
@@ -728,9 +734,9 @@ int main()
         hdr_Shader.setInt("hdr", hdr);
         hdr_Shader.setFloat("exposure", exposure);
         renderQuad();
-        
-        std::cout << "hdr: " << (hdr ? "on" : "off") << "| exposure: " << exposure << std::endl;
 
+        std::cout << "hdr: " << (hdr ? "on" : "off") << "| exposure: " << exposure << std::endl;
+//===========================================================================================
         
         
         
@@ -878,7 +884,7 @@ int main()
         
         
         
-        
+//--------------------------------------------------------------------------
         // 绘制天空盒 draw skybox as last
 //        glDepthFunc(GL_LEQUAL);  // 更改深度函数，以便深度测试在值等于深度缓冲区最大值时通过
 //        skyboxShader.use();
@@ -892,7 +898,7 @@ int main()
 //        glDrawArrays(GL_TRIANGLES, 0, 36);
 //        glBindVertexArray(0);
 //        glDepthFunc(GL_LESS); // set depth function back to default
-        
+//--------------------------------------------------------------------------
         
         
         
@@ -1041,7 +1047,7 @@ void renderCube()
 
 
 
-// renderQuad() renders a 1x1 XY quad in NDC
+// (屏幕缓冲)renderQuad() renders a 1x1 XY quad in NDC
 // -----------------------------------------
 unsigned int quadVAO = 0;
 unsigned int quadVBO;
@@ -1269,7 +1275,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 //加载纹理贴图
-unsigned int loadTexture(char const * path, bool isFlipped = true, bool isRepeated = true)
+unsigned int loadTexture(char const * path, bool isFlipped, bool isRepeated, bool gammaCorrection)
 {
     unsigned int textureID;
     glGenTextures(1, &textureID); //生成 1 个纹理，保存ID到textureID
@@ -1279,18 +1285,27 @@ unsigned int loadTexture(char const * path, bool isFlipped = true, bool isRepeat
     if(isFlipped)
         stbi_set_flip_vertically_on_load(true); // 让stb_image.h在加载图片时翻转y轴
     
-    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0); //加载图片，得到长宽等信息
+    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0); //加载图片，得到长宽颜色通道信息
     if (data)
     {
-        GLenum format;
+        GLenum internalFormat;
+        GLenum dataFormat;
         if (nrComponents == 1)
-            format = GL_RED;
+        {
+            internalFormat = dataFormat = GL_RED;
+        }
         else if (nrComponents == 3)
-            format = GL_RGB;
-        else format = GL_RGBA;
+        {
+            internalFormat = gammaCorrection ? GL_SRGB : GL_RGB;
+            dataFormat = GL_RGB;
+        }
+        else {
+            internalFormat = gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA;
+            dataFormat = GL_RGBA;
+        }
 
         glBindTexture(GL_TEXTURE_2D, textureID); // 绑定纹理，接下来所有GL_TEXTURE_2D操作都是对此纹理
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data); //生成一个纹理
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data); //生成一个纹理
         //参数：纹理目标GL_TEXTURE_2D，Mipmap级别0，纹理存储为RGB格式，宽度，高度，历史遗留总是0，使用RGB值加载，储存为char(byte)数组，图像数据
         glGenerateMipmap(GL_TEXTURE_2D); //自动生成所有需要的多级渐远纹理（Mipmap）
 

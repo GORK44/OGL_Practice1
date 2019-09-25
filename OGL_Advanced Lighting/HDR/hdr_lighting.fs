@@ -31,7 +31,7 @@ void main()
         float diff = max(dot(lightDir, normal), 0.0);
         vec3 diffuse = lights[i].Color * diff * color;
         vec3 result = diffuse;
-        // attenuation (use quadratic as we have gamma correction)
+        // 衰减（使用二次校正，因为我们有伽马校正）attenuation (use quadratic as we have gamma correction)
         float distance = length(fs_in.FragPos - lights[i].Position);
         result *= 1.0 / (distance * distance);
         lighting += result;
