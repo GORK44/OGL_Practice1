@@ -779,6 +779,7 @@ int main()
         
         // 1. render scene into floating point framebuffer
         // -----------------------------------------------
+        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -865,15 +866,42 @@ int main()
         shader_Blur.use();
         for (unsigned int i = 0; i < amount; i++)
         {
+//            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i % 2]);
+//            shader_Blur.setInt("horizontal", horizontal);
+//            glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[i % 2]);  // bind texture of other framebuffer (or scene if first iteration)
+            
             glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
-            shader_Blur.setInt("horizontal", horizontal);
+            
+//            glPushAttrib(GL_VIEWPORT_BIT);
+            glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+            
+//            glMatrixMode(GL_PROJECTION);
+//            glPushMatrix();
+//            glLoadIdentity();
+//            glOrtho(0, SCR_WIDTH, 0, SCR_HEIGHT, -1, 1);
+            
+//            glMatrixMode(GL_MODELVIEW);
+//            glPushMatrix();
+//            glLoadIdentity();
+            
+//            if(i == 3)
+//                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            
+            
+            glUniform1i(glGetUniformLocation(shader_Blur.ID, "horizontal"), horizontal);
+            glActiveTexture(GL_TEXTURE0);
+            glUniform1i(glGetUniformLocation(shader_Blur.ID, "image"), 0);
             glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);  // bind texture of other framebuffer (or scene if first iteration)
+//            glBindTexture(GL_TEXTURE_2D, colorBuffers[1]);
+            
             renderQuad();
             horizontal = !horizontal;
             if (first_iteration)
                 first_iteration = false;
+//            std::cout<<i<<std::endl;
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, SCR_WIDTH*2, SCR_HEIGHT*2);//mac属于视网膜显示屏 ，存储到framebuffer viewport 尺寸与framebuffer关联texture2d尺寸相同，但输出到屏幕则viewport尺寸要扩大两倍以适应视网膜显示器
         
         // 3. now render floating point color buffer to 2D quad and tonemap HDR colors to default framebuffer's (clamped) color range
         // --------------------------------------------------------------------------------------------------------------------------
@@ -884,11 +912,11 @@ int main()
         glUniform1i(glGetUniformLocation(shader_BloomFinal.ID, "scene"), 0);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
-        glUniform1i(glGetUniformLocation(shader_BloomFinal.ID, "bloomBlur"), 0);
+        glUniform1i(glGetUniformLocation(shader_BloomFinal.ID, "bloomBlur"), 1);
         shader_BloomFinal.setInt("bloom", bloom);
         shader_BloomFinal.setFloat("exposure", exposure);
         renderQuad();
-        
+//
 //        std::cout << "bloom: " << (bloom ? "on" : "off") << "| exposure: " << exposure << std::endl;
 
         
@@ -1264,6 +1292,7 @@ void renderQuad()
             -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+            
         };
         // setup plane VAO
         glGenVertexArrays(1, &quadVAO);
