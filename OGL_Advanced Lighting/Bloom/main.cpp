@@ -471,14 +471,14 @@ int main()
 //    lightColors.push_back(glm::vec3(0.0f, 0.1f, 0.0f));
     //========================================================================
     
-    // configure (floating point) framebuffers
+    // （HDR，Bloom）配置浮点帧缓冲区configure (floating point) framebuffers
     // ---------------------------------------
     unsigned int hdrFBO;
-    glGenFramebuffers(1, &hdrFBO);
+    glGenFramebuffers(1, &hdrFBO); //创建一个帧缓冲对象
     glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
-    // create 2 floating point color buffers (1 for normal rendering, other for brightness treshold values)
+    // 创建2个浮点颜色缓冲区colorBuffers（1个正常渲染，frag输出FragColor；第2个用于过亮区域，frag输出BrightColor）
     unsigned int colorBuffers[2];
-    glGenTextures(2, colorBuffers);
+    glGenTextures(2, colorBuffers);//生成 1 个纹理，保存ID到
     for (unsigned int i = 0; i < 2; i++)
     {
         glBindTexture(GL_TEXTURE_2D, colorBuffers[i]);
@@ -488,25 +488,28 @@ int main()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  // we clamp to the edge as the blur filter would otherwise sample repeated texture values!
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         // attach texture to framebuffer
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0);//把纹理附加到帧缓冲
     }
-    // create and attach depth buffer (renderbuffer)
-    unsigned int rboDepth;
-    glGenRenderbuffers(1, &rboDepth);
-    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+    
+    // 渲染缓冲对象附加的好处是，它会将数据储存为OpenGL原生的渲染格式，它是为离屏渲染到帧缓冲优化过的。然而，渲染缓冲对象通常都是只写的，所以你不能读取它们（比如使用纹理访问）。
+    unsigned int rboDepth; //写入深度用于测试
+    glGenRenderbuffers(1, &rboDepth); //创建一个渲染缓冲对象，保存ID到rboDepth
+    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);//绑定这个渲染缓冲对象，之后所有的渲染缓冲操作影响当前的rbo
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
-    // tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
-    unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-    glDrawBuffers(2, attachments);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);// 把rbo附加到帧缓冲的深度附件上
+    
+    // 告诉OpenGL我们将使用（此帧缓冲区的）哪些颜色附件进行渲染
+    unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };//传递多个颜色纹理附件的枚举
+    glDrawBuffers(2, attachments);//当渲染到这个帧缓冲中的时候，每当着色器使用location(=0或=1)，那么fragment就会用相应的颜色缓冲就会被用来渲染。
     // finally check if framebuffer is complete
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "Framebuffer not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
-    // ping-pong-framebuffer for blurring
-    unsigned int pingpongFBO[2];
-    unsigned int pingpongColorbuffers[2];
+    
+    // 乒乓帧缓冲 用于模糊 ping-pong-framebuffer for blurring
+    unsigned int pingpongFBO[2]; // 2个浮点颜色缓冲区
+    unsigned int pingpongColorbuffers[2]; // 2个纹理附件
     glGenFramebuffers(2, pingpongFBO);
     glGenTextures(2, pingpongColorbuffers);
     for (unsigned int i = 0; i < 2; i++)
@@ -528,7 +531,7 @@ int main()
     // -------------
     // positions
     std::vector<glm::vec3> lightPositions;
-    lightPositions.push_back(glm::vec3( 0.0f, 0.5f,  1.5f));
+    lightPositions.push_back(glm::vec3( 0.0f, 0.5f,  1.5f)); //vector.push_back添加元素
     lightPositions.push_back(glm::vec3(-4.0f, 0.5f, -3.0f));
     lightPositions.push_back(glm::vec3( 3.0f, 0.5f,  1.0f));
     lightPositions.push_back(glm::vec3(-.8f,  2.4f, -1.0f));
@@ -777,10 +780,10 @@ int main()
         glm::mat4 model = glm::mat4(1.0f);
         
         
-        // 1. render scene into floating point framebuffer
+        // 1. 将场景渲染到浮点帧缓冲区 render scene into floating point framebuffer
         // -----------------------------------------------
-        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 //        view = camera.GetViewMatrix();
@@ -859,51 +862,33 @@ int main()
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         
-        // 2. blur bright fragments with two-pass Gaussian Blur
+        // 2. 通过两次高斯模糊来模糊明亮的片段 blur bright fragments with two-pass Gaussian Blur
         // --------------------------------------------------
         bool horizontal = true, first_iteration = true;
         unsigned int amount = 10;
         shader_Blur.use();
         for (unsigned int i = 0; i < amount; i++)
         {
-//            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i % 2]);
-//            shader_Blur.setInt("horizontal", horizontal);
-//            glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[i % 2]);  // bind texture of other framebuffer (or scene if first iteration)
-            
             glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
-            
-//            glPushAttrib(GL_VIEWPORT_BIT);
             glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
             
-//            glMatrixMode(GL_PROJECTION);
-//            glPushMatrix();
-//            glLoadIdentity();
-//            glOrtho(0, SCR_WIDTH, 0, SCR_HEIGHT, -1, 1);
-            
-//            glMatrixMode(GL_MODELVIEW);
-//            glPushMatrix();
-//            glLoadIdentity();
-            
-//            if(i == 3)
-//                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            
-            
             glUniform1i(glGetUniformLocation(shader_Blur.ID, "horizontal"), horizontal);
+//            shader_Blur.setInt("horizontal", horizontal);
+            
             glActiveTexture(GL_TEXTURE0);
             glUniform1i(glGetUniformLocation(shader_Blur.ID, "image"), 0);
-            glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);  // bind texture of other framebuffer (or scene if first iteration)
+            glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);  // 绑定另一个帧缓冲的纹理bind texture of other framebuffer (or scene if first iteration)
 //            glBindTexture(GL_TEXTURE_2D, colorBuffers[1]);
             
             renderQuad();
             horizontal = !horizontal;
             if (first_iteration)
                 first_iteration = false;
-//            std::cout<<i<<std::endl;
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, SCR_WIDTH*2, SCR_HEIGHT*2);//mac属于视网膜显示屏 ，存储到framebuffer viewport 尺寸与framebuffer关联texture2d尺寸相同，但输出到屏幕则viewport尺寸要扩大两倍以适应视网膜显示器
         
-        // 3. now render floating point color buffer to 2D quad and tonemap HDR colors to default framebuffer's (clamped) color range
+        // 3. 现在将浮点颜色缓冲区渲染为2D四边形，并将色调映射HDR颜色渲染为默认帧缓冲区的（固定）颜色范围 now render floating point color buffer to 2D quad and tonemap HDR colors to default framebuffer's (clamped) color range
         // --------------------------------------------------------------------------------------------------------------------------
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shader_BloomFinal.use();
@@ -972,7 +957,7 @@ int main()
         
         
         
-        
+ //-------------------------------------
 //        //视差映射（高度图）
 //        parallaxMapShader.use();
 //        parallaxMapShader.setMat4("projection", projection);
@@ -1008,7 +993,7 @@ int main()
 //        model = glm::scale(model, glm::vec3(0.1f));
 //        whiteShader.setMat4("model", model);
 //        renderQuad();
-
+//-------------------------------------
         
   
         

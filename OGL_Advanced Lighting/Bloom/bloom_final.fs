@@ -14,10 +14,13 @@ void main()
     vec3 hdrColor = texture(scene, TexCoords).rgb;
     vec3 bloomColor = texture(bloomBlur, TexCoords).rgb;
     if(bloom)
-        hdrColor += bloomColor; // additive blending
+        hdrColor += bloomColor; // 混合 additive blending
     // tone mapping
     vec3 result = vec3(1.0) - exp(-hdrColor * exposure);
     // also gamma correct while we're at it
     result = pow(result, vec3(1.0 / gamma));
     FragColor = vec4(result, 1.0);
+    
+    
+//    FragColor = vec4(gl_FragCoord.x / 1600,gl_FragCoord.y / 1200,0.0,1.0);
 }

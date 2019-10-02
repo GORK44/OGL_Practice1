@@ -28,5 +28,8 @@ void main()
             result += texture(image, TexCoords - vec2(0.0, tex_offset.y * i)).rgb * weight[i];
         }
     }
+    
+//    vec3 result = texture(image, TexCoords).rgb;
+    
     FragColor = vec4(result, 1.0);
 }
