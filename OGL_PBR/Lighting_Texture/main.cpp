@@ -28,7 +28,7 @@ void processInput(GLFWwindow *window); //输入控制
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);//鼠标移动控制方向
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);//滚轮控制FOV
 
-unsigned int loadTexture(const char *path, bool isFliped, bool isRepeated, bool gammaCorrection);//加载纹理贴图（反转，边缘重复，是sRBG纹理）
+unsigned int loadTexture(char const *pathFolder, const char *pathLast, bool isFliped, bool isRepeated, bool gammaCorrection);//加载纹理贴图（反转，边缘重复，是sRBG纹理）
 unsigned int loadCubemap(vector<std::string> faces);//加载立方体贴图
 
 
@@ -919,17 +919,14 @@ int main()
     
     // load PBR material textures
     // --------------------------
-    char fileName[] ="/书/OGL_Test/rustediron1-alt2-Unreal-Engine";
-    char fileName1[] ="/书/OGL_Test/rustediron1-alt2-Unreal-Engine";
-    unsigned int albedo    = loadTexture(std::strcat(fileName, "/basecolor.png"),true,true,false);
-    strcpy(fileName, fileName1);
-    unsigned int normal    = loadTexture(std::strcat(fileName, "/normal.png"),true,true,false);
-    strcpy(fileName, fileName1);
-    unsigned int metallic  = loadTexture(std::strcat(fileName, "/metallic.png"),true,true,false);
-    strcpy(fileName, fileName1);
-    unsigned int roughness = loadTexture(std::strcat(fileName, "/roughness.png"),true,true,false);
-    strcpy(fileName, fileName1);
-    unsigned int ao        = loadTexture(std::strcat(fileName, "/ao.jpg"),true,true,false);
+    char folderName[] ="/书/OGL_Test/rustediron1-alt2-Unreal-Engine";
+    
+    unsigned int albedo    = loadTexture(folderName, "/basecolor.png",true,true,false);
+    unsigned int normal    = loadTexture(folderName, "/normal.png",true,true,false);
+    unsigned int metallic  = loadTexture(folderName, "/metallic.png",true,true,false);
+    unsigned int roughness = loadTexture(folderName, "/roughness.png",true,true,false);
+    unsigned int ao        = loadTexture(folderName, "/ao.jpg",true,true,false);
+    
     
     // lights
     // ------
@@ -962,22 +959,23 @@ int main()
     //================================================================================
     // 生成纹理 load and create a texture
     // ----------------------------------------------------------
-//    unsigned int diffuseMap = loadTexture("/书/OGL_Test/im.png");
-//    unsigned int specularMap = loadTexture("/书/OGL_Test/container2_specular.jpg");
-    unsigned int cubeTexture  = loadTexture("/书/OGL_Test/container.jpg",true,true,true);
-    unsigned int containerTexture  = loadTexture("/书/OGL_Test/container2.jpg",true,true,true);
-    unsigned int woodTexture = loadTexture("/书/OGL_Test/wood.png",true,true,true);
-    unsigned int transparentTexture = loadTexture("/书/OGL_Test/blending.png",true,false,true);
+    
+    char pathHead[] = "/书/OGL_Test";
+    
+    unsigned int cubeTexture  = loadTexture(pathHead, "/container.jpg",true,true,true);
+    unsigned int containerTexture  = loadTexture(pathHead, "/container2.jpg",true,true,true);
+    unsigned int woodTexture = loadTexture(pathHead, "/wood.png",true,true,true);
+    unsigned int transparentTexture = loadTexture(pathHead, "/blending.png",true,false,true);
 
-    unsigned int brickWallTexture = loadTexture("/书/OGL_Test/brickwall.jpg",true,true,true);
-    unsigned int brickWall_Normal_Texture = loadTexture("/书/OGL_Test/brickwall_normal.jpg",true,true,false);
+    unsigned int brickWallTexture = loadTexture(pathHead, "/brickwall.jpg",true,true,true);
+    unsigned int brickWall_Normal_Texture = loadTexture(pathHead, "/brickwall_normal.jpg",true,true,false);
 
-    unsigned int brickWallTexture2 = loadTexture("/书/OGL_Test/bricks2.jpg",true,true,true);
-    unsigned int brickWall_Normal_Texture2 = loadTexture("/书/OGL_Test/bricks2_normal.jpg",true,true,false);
-    unsigned int brickWall_Height_Texture2 = loadTexture("/书/OGL_Test/bricks2_disp.jpg",true,true,false);
+    unsigned int brickWallTexture2 = loadTexture(pathHead, "/bricks2.jpg",true,true,true);
+    unsigned int brickWall_Normal_Texture2 = loadTexture(pathHead, "/bricks2_normal.jpg",true,true,false);
+    unsigned int brickWall_Height_Texture2 = loadTexture(pathHead, "/bricks2_disp.jpg",true,true,false);
 
-    unsigned int toyBox_Normal_Texture2 = loadTexture("/书/OGL_Test/toy_box_normal.png",true,true,false);
-    unsigned int toyBox_Height_Texture2 = loadTexture("/书/OGL_Test/toy_box_disp.png",true,true,false);
+    unsigned int toyBox_Normal_Texture2 = loadTexture(pathHead, "/toy_box_normal.png",true,true,false);
+    unsigned int toyBox_Height_Texture2 = loadTexture(pathHead, "/toy_box_disp.png",true,true,false);
 
 
     vector<std::string> faces
@@ -1623,7 +1621,7 @@ int main()
 
 
 //--------------------------------------------------------------------------
-        // 绘制天空盒 draw skybox as last
+//         //绘制天空盒 draw skybox as last
 //        glDepthFunc(GL_LEQUAL);  // 更改深度函数，以便深度测试在值等于深度缓冲区最大值时通过
 //        skyboxShader.use();
 //        view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // 将观察矩阵转换为3x3矩阵（移除位移），再将其转换回4x4矩阵
@@ -2136,8 +2134,13 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 //加载纹理贴图
-unsigned int loadTexture(char const * path, bool isFlipped, bool isRepeated, bool gammaCorrection)
+unsigned int loadTexture(char const * pathFolder, char const * pathLast, bool isFlipped, bool isRepeated, bool gammaCorrection)
 {
+    char path[100];
+    std::strcpy(path, pathFolder);
+    std::strcat(path, pathLast);
+    
+    
     unsigned int textureID;
     glGenTextures(1, &textureID); //生成 1 个纹理，保存ID到textureID
 
@@ -2207,6 +2210,8 @@ unsigned int loadCubemap(vector<std::string> faces)
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 
+    stbi_set_flip_vertically_on_load(false); // 让stb_image.h在加载图片时翻转y轴
+    
     int width, height, nrChannels;
     for (unsigned int i = 0; i < faces.size(); i++)
     {
