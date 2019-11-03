@@ -884,7 +884,8 @@ int main()
     shader_SSAOBlur.use();
     shader_SSAOBlur.setInt("ssaoInput", 0);
 
-
+    
+// ------------------------------------------------------------------------------
 //    //PBR_redBall
 //    Shader shader_PBR("/书/OGL_Test/Shader/pbr_redBall.vs", "/书/OGL_Test/Shader/pbr_redBall.fs");
 //    shader_PBR.use();
@@ -907,27 +908,27 @@ int main()
 //    int nrColumns = 7;
 //    float spacing = 2.5;
     
+// ------------------------------------------------------------------------------
     //PBR_Texture
     Shader shader_PBR("/书/OGL_Test/Shader/pbr.vs", "/书/OGL_Test/Shader/pbr.fs");
-    
+
     shader_PBR.use();
     shader_PBR.setInt("albedoMap", 0);
     shader_PBR.setInt("normalMap", 1);
     shader_PBR.setInt("metallicMap", 2);
     shader_PBR.setInt("roughnessMap", 3);
     shader_PBR.setInt("aoMap", 4);
-    
+
     // load PBR material textures
     // --------------------------
     char folderName[] ="/书/OGL_Test/rustediron1-alt2-Unreal-Engine";
-    
+
     unsigned int albedo    = loadTexture(folderName, "/basecolor.png",true,true,false);
     unsigned int normal    = loadTexture(folderName, "/normal.png",true,true,false);
     unsigned int metallic  = loadTexture(folderName, "/metallic.png",true,true,false);
     unsigned int roughness = loadTexture(folderName, "/roughness.png",true,true,false);
     unsigned int ao        = loadTexture(folderName, "/ao.jpg",true,true,false);
-    
-    
+
     // lights
     // ------
     glm::vec3 lightPositions[] = {
@@ -939,7 +940,7 @@ int main()
     int nrRows = 7;
     int nrColumns = 7;
     float spacing = 2.5;
-
+// ------------------------------------------------------------------------------
 
     //========================================================================
 
@@ -1064,12 +1065,13 @@ int main()
 
 
 
-
+//===========================================================================================
+        //PBR_Texture
         shader_PBR.use();
         shader_PBR.setMat4("view", view);
         shader_PBR.setVec3("camPos", camera.Position);
         shader_PBR.setMat4("projection", projection);
-        
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, albedo);
         glActiveTexture(GL_TEXTURE1);
@@ -1081,10 +1083,9 @@ int main()
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, ao);
 
-        // render rows*column number of spheres with varying metallic/roughness values scaled by rows and columns respectively
+        // 画球 render rows*column number of spheres with varying metallic/roughness values scaled by rows and columns respectively
         for (int row = 0; row < nrRows; ++row)
         {
-            shader_PBR.setFloat("metallic", (float)row / (float)nrRows);
             for (int col = 0; col < nrColumns; ++col)
             {
 
@@ -1100,26 +1101,70 @@ int main()
             }
         }
 
-        // render light source (simply re-render sphere at light positions)
-        // this looks a bit off as we use the same shader, but it'll make their positions obvious and
-        // keeps the codeprint small.
+        // 传光源数据。并为了方便用同一个shader画出光源球
         for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
         {
-            glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 5.0) * 5.0, 0.0, 0.0);
-            newPos = lightPositions[i];
-            shader_PBR.setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
+            glm::vec3 newPos = lightPositions[i];
+            shader_PBR.setVec3("lightPositions[" + std::to_string(i) + "]", newPos);//传光源数据到shader计算
             shader_PBR.setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
 
+            // 画光源球
             model = glm::mat4(1.0f);
             model = glm::translate(model, newPos);
             model = glm::scale(model, glm::vec3(0.5f));
             shader_PBR.setMat4("model", model);
             renderSphere();
+//            std::cout<<i<<std::endl; //只有一个光源
         }
-
-
-
-
+//===========================================================================================
+        
+//===========================================================================================
+//        //PBR_RedBall
+//        shader_PBR.use();
+//        shader_PBR.setMat4("view", view);
+//        shader_PBR.setVec3("camPos", camera.Position);
+//        shader_PBR.setMat4("projection", projection);
+//
+//        // render rows*column number of spheres with varying metallic/roughness values scaled by rows and columns respectively
+//        for (int row = 0; row < nrRows; ++row)
+//        {
+//            shader_PBR.setFloat("metallic", (float)row / (float)nrRows);
+//            for (int col = 0; col < nrColumns; ++col)
+//            {
+//                // we clamp the roughness to 0.025 - 1.0 as perfectly smooth surfaces (roughness of 0.0) tend to look a bit off
+//                // on direct lighting.
+//                shader_PBR.setFloat("roughness", glm::clamp((float)col / (float)nrColumns, 0.05f, 1.0f));
+//
+//                model = glm::mat4(1.0f);
+//                model = glm::translate(model, glm::vec3(
+//                                                        (col - (nrColumns / 2)) * spacing,
+//                                                        (row - (nrRows / 2)) * spacing,
+//                                                        0.0f
+//                                                        ));
+//                shader_PBR.setMat4("model", model);
+//                renderSphere();
+//
+//            }
+//        }
+//
+//        // render light source (simply re-render sphere at light positions)
+//        // this looks a bit off as we use the same shader, but it'll make their positions obvious and
+//        // keeps the codeprint small.
+//        for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
+//        {
+//            glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 5.0) * 5.0, 0.0, 0.0);
+//            newPos = lightPositions[i];
+////            shader_PBR.setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
+////            shader_PBR.setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
+//
+//            model = glm::mat4(1.0f);
+//            model = glm::translate(model, newPos);
+//            model = glm::scale(model, glm::vec3(0.5f));
+//            shader_PBR.setMat4("model", model);
+////            renderSphere();
+//            std::cout<<i<<std::endl;
+//        }
+//===========================================================================================
 
 
 //===========================================================================================
