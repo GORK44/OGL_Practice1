@@ -1206,7 +1206,7 @@ int main()
 
         
 //===========================================================================================
-        // render scene, supplying the convoluted irradiance map to the final shader.
+        // 渲染场景，将卷积的辐照度图提供给最终的着色器。
         // ------------------------------------------------------------------------------------------
         pbrShader.use();
 //        glm::mat4 view = camera.GetViewMatrix();
@@ -1214,15 +1214,15 @@ int main()
         pbrShader.setVec3("camPos", camera.Position);
         pbrShader.setMat4("projection", projection);
         
-        // render rows*column number of spheres with material properties defined by textures (they all have the same material properties)
+        // 使用材质定义的材质属性渲染行*列数的球体（它们都具有相同的材质属性）
 //        glm::mat4 model = glm::mat4(1.0f);
         for (int row = 0; row < nrRows; ++row)
         {
             pbrShader.setFloat("metallic", (float)row / (float)nrRows);
             for (int col = 0; col < nrColumns; ++col)
             {
-                // we clamp the roughness to 0.025 - 1.0 as perfectly smooth surfaces (roughness of 0.0) tend to look a bit off
-                // on direct lighting.
+                // 我们将粗糙度限制在0.025-1.0，因为完全光滑的表面（0.0的粗糙度）看起来有点偏离
+                // 在直接照明下 on direct lighting.
                 pbrShader.setFloat("roughness", glm::clamp((float)col / (float)nrColumns, 0.05f, 1.0f));
                 
                 model = glm::mat4(1.0f);
@@ -1237,9 +1237,7 @@ int main()
         }
         
         
-        // render light source (simply re-render sphere at light positions)
-        // this looks a bit off as we use the same shader, but it'll make their positions obvious and
-        // keeps the codeprint small.
+        //传光源数据。并为了方便用同一个shader画出光源球
         for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
         {
             glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 5.0) * 5.0, 0.0, 0.0);
@@ -1247,6 +1245,7 @@ int main()
             pbrShader.setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
             pbrShader.setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
             
+            // 画光源球
             model = glm::mat4(1.0f);
             model = glm::translate(model, newPos);
             model = glm::scale(model, glm::vec3(0.5f));
@@ -1254,7 +1253,7 @@ int main()
             renderSphere();
         }
         
-        // render skybox (render as last to prevent overdraw)
+        // 渲染天空盒（最后渲染以防止 overdraw（过度绘制））
         backgroundShader.use();
         backgroundShader.setMat4("view", view);
         backgroundShader.setMat4("projection", projection);
