@@ -1193,9 +1193,11 @@ int main()
         GORK::RenderCube();
         
         
-        // render BRDF map to screen
-        //brdfShader.Use();
-        //renderQuad();
+        // 把 LUT 渲染到屏幕 render brdfLUTTexture to screen
+        screenShader.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
+        GORK::RenderQuad();
 
         
 //===========================================================================================
