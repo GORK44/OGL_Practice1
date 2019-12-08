@@ -19,13 +19,13 @@
 //#define STB_IMAGE_IMPLEMENTATION
 //#include "stb_image.h"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+//#include <glm/glm.hpp>
+//#include <glm/gtc/matrix_transform.hpp>
+//#include <glm/gtc/type_ptr.hpp>
 
-#include "Shader.hpp"
+//#include "Shader.hpp"
 #include "Camera.hpp"
-#include "Model.hpp"
+//#include "Model.hpp"
 
 #include "gork.hpp"
 
@@ -87,7 +87,7 @@ public:
     
     
     
-    
+    static GLFWwindow* InitWindow();// 初始化和配置
     
 
 

@@ -25,7 +25,6 @@
 #include "gork.hpp"
 
 
-//using namespace GORK;
 
 //void Framebuffer_size_callback(GLFWwindow* window, int width, int height); // 在每次窗口大小被调整的时候被调用
 //void ProcessInput(GLFWwindow *window); //输入控制
@@ -114,48 +113,58 @@ int main()
 {
 
 //========================================================================
-    // ----------------------------------
-    // 初始化和配置 glfw: initialize and configure
-    glfwInit(); //初始化GLFW
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);  //使用 glfwWindowHint 函数来配置GLFW
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // //适配 OS X 的编译
-#endif
-    // ----------------------------------
+//    // ----------------------------------
+//    // 初始化和配置 glfw: initialize and configure
+//    glfwInit(); //初始化GLFW
+//    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);  //使用 glfwWindowHint 函数来配置GLFW
+//    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+//    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+//#ifdef __APPLE__
+//    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // //适配 OS X 的编译
+//#endif
+//    // ----------------------------------
+//    // 创建一个窗口对象 glfw window creation
+//    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL); //创建窗口
+//    if (window == NULL)
+//    {
+//        std::cout << "Failed to create GLFW window" << std::endl;
+//        glfwTerminate(); //（Terminate终止） 释放/删除之前的分配的所有资源
+//        return -1;
+//    }
+//    glfwMakeContextCurrent(window); //将创建的窗口设置为当前窗口（通知GLFW将我们窗口的上下文设置为当前线程的主上下文）
+//    glfwSetFramebufferSizeCallback(window, GORK::Framebuffer_size_callback); //每当窗口调整大小的时候调用framebuffer_size_callback
+//
+//    // ----------------------------------
+//    // 鼠标控制
+//    glfwSetCursorPosCallback(window, GORK::Mouse_callback);//鼠标一移动mouse_callback函数就会被调用
+//    glfwSetScrollCallback(window, GORK::Scroll_callback);//滚轮一滚动scroll_callback函数就会被调用
+//
+//    // 捕捉鼠标 tell GLFW to capture our mouse
+//    //    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//
+//
+//    // ----------------------------------
+//    // 加载所有OpenGL函数指针 glad: load all OpenGL function pointers
+//    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+//    {
+//        std::cout << "Failed to initialize GLAD" << std::endl;
+//        return -1;
+//    }
+//    // ----------------------------------
+//========================================================================
     // 创建一个窗口对象 glfw window creation
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL); //创建窗口
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate(); //（Terminate终止） 释放/删除之前的分配的所有资源
-        return -1;
-    }
-    glfwMakeContextCurrent(window); //将创建的窗口设置为当前窗口（通知GLFW将我们窗口的上下文设置为当前线程的主上下文）
-    glfwSetFramebufferSizeCallback(window, GORK::Framebuffer_size_callback); //每当窗口调整大小的时候调用framebuffer_size_callback
+    GLFWwindow* window = GORK::InitWindow();
+    if (!window) return -1;
+
 
     // ----------------------------------
     // 鼠标控制
     glfwSetCursorPosCallback(window, GORK::Mouse_callback);//鼠标一移动mouse_callback函数就会被调用
     glfwSetScrollCallback(window, GORK::Scroll_callback);//滚轮一滚动scroll_callback函数就会被调用
 
-    // 捕捉鼠标 tell GLFW to capture our mouse
+    //// 捕捉鼠标 tell GLFW to capture our mouse
     //    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    
-
     // ----------------------------------
-    // 加载所有OpenGL函数指针 glad: load all OpenGL function pointers
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
-    // ----------------------------------
-//========================================================================
-
-
-
 
 
 
