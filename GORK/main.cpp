@@ -26,42 +26,9 @@
 
 
 
-//void Framebuffer_size_callback(GLFWwindow* window, int width, int height); // 在每次窗口大小被调整的时候被调用
-//void ProcessInput(GLFWwindow *window); //输入控制
-//void Mouse_callback(GLFWwindow* window, double xpos, double ypos);//鼠标移动控制方向
-//void Scroll_callback(GLFWwindow* window, double xoffset, double yoffset);//滚轮控制FOV
-
-unsigned int loadTexture(char const *pathFolder, const char *pathLast, bool isFlipped, bool isRepeated, bool gammaCorrection);//加载纹理贴图（反转，边缘重复，是sRGB纹理）
-unsigned int loadCubemap(vector<std::string> faces);//加载立方体贴图
-
-const bool Flip = true;//y轴翻转
-const bool NotFlip = false;
-const bool Repeat = true;//边缘重复
-const bool notRepeat = false;
-const bool sRGB = true;//是sRGB纹理，已经gammaCorrection
-const bool RGB = false;
 
 
 
-// settings 窗口宽和长
-//const unsigned int SCR_WIDTH = 800;
-//const unsigned int SCR_HEIGHT = 600;
-
-
-// 相机 camera
-//Camera camera(glm::vec3(0.0f, 0.0f, 2.0f));
-//lastX = SCR_WIDTH / 2.0f;
-//lastY = SCR_HEIGHT / 2.0f;
-//bool firstMouse = true;
-
-// timing
-//float deltaTime = 0.0f; // 当前帧与上一帧的时间差
-//float lastFrame = 0.0f; // 上一帧的时间
-
-// lighting
-//glm::vec3 lightPos(1.2f, 1.0f, 2.0f); //光源在世界空间的坐标
-
-void renderScene(const Shader &shader);
 void renderCube();
 void renderQuad();
 
@@ -69,15 +36,7 @@ unsigned int planeVAO;
 
 float heightScale = 0.1; //视差映射
 
-////HDR
-//bool hdr = true;
-//bool hdrKeyPressed = false;
-//float exposure = 1.0f;
-//
-//void renderCube();//HDR
-//
-//bool bloom = true;  //bloom
-//bool bloomKeyPressed = false;
+
 
 float lerp(float a, float b, float f)   //SSAO
 {
@@ -99,6 +58,8 @@ void renderSphere(); //PBR
 Camera GORK::camera(glm::vec3(0.0f, 0.0f, 2.0f));
 
 
+
+
 //HDR
 bool GORK::hdr = true;
 bool GORK::hdrKeyPressed = false;
@@ -112,46 +73,7 @@ bool GORK::bloomKeyPressed = false;
 int main()
 {
 
-//========================================================================
-//    // ----------------------------------
-//    // 初始化和配置 glfw: initialize and configure
-//    glfwInit(); //初始化GLFW
-//    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);  //使用 glfwWindowHint 函数来配置GLFW
-//    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-//    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-//#ifdef __APPLE__
-//    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // //适配 OS X 的编译
-//#endif
-//    // ----------------------------------
-//    // 创建一个窗口对象 glfw window creation
-//    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL); //创建窗口
-//    if (window == NULL)
-//    {
-//        std::cout << "Failed to create GLFW window" << std::endl;
-//        glfwTerminate(); //（Terminate终止） 释放/删除之前的分配的所有资源
-//        return -1;
-//    }
-//    glfwMakeContextCurrent(window); //将创建的窗口设置为当前窗口（通知GLFW将我们窗口的上下文设置为当前线程的主上下文）
-//    glfwSetFramebufferSizeCallback(window, GORK::Framebuffer_size_callback); //每当窗口调整大小的时候调用framebuffer_size_callback
-//
-//    // ----------------------------------
-//    // 鼠标控制
-//    glfwSetCursorPosCallback(window, GORK::Mouse_callback);//鼠标一移动mouse_callback函数就会被调用
-//    glfwSetScrollCallback(window, GORK::Scroll_callback);//滚轮一滚动scroll_callback函数就会被调用
-//
-//    // 捕捉鼠标 tell GLFW to capture our mouse
-//    //    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-//
-//
-//    // ----------------------------------
-//    // 加载所有OpenGL函数指针 glad: load all OpenGL function pointers
-//    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-//    {
-//        std::cout << "Failed to initialize GLAD" << std::endl;
-//        return -1;
-//    }
-//    // ----------------------------------
-//========================================================================
+
     // 创建一个窗口对象 glfw window creation
     GLFWwindow* window = GORK::InitWindow();
     if (!window) return -1;
@@ -167,228 +89,6 @@ int main()
     // ----------------------------------
 
 
-
-
-    //========================================================================
-    // 箱子顶点，标准化设备坐标 set up vertex data (and buffer(s)) and configure vertex attributes
-    float vertices[] = {
-        // positions          // normals           // texture coords
-        // Back face
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-    };
-
-    //    unsigned int indices[] = {  // 注意索引从0开始 note that we start from 0!
-    //        0, 1, 3,  // 第一个三角形 first Triangle
-    //        1, 2, 3   // 第二个三角形 second Triangle
-    //    };
-
-
-
-
-    //帧缓冲屏幕四边形
-    float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
-        // positions   // texCoords
-        -1.0f,  1.0f,  0.0f, 1.0f,
-        -1.0f, -1.0f,  0.0f, 0.0f,
-        1.0f, -1.0f,  1.0f, 0.0f,
-
-        -1.0f,  1.0f,  0.0f, 1.0f,
-        1.0f, -1.0f,  1.0f, 0.0f,
-        1.0f,  1.0f,  1.0f, 1.0f
-    };
-
-    //天空盒
-    float skyboxVertices[] = {
-        // positions
-        -1.0f,  1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-        1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-        1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-        -1.0f,  1.0f, -1.0f,
-        1.0f,  1.0f, -1.0f,
-        1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-        1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-        1.0f, -1.0f,  1.0f
-    };
-
-
-
-    float planeVertices[] = {
-        // positions            // normals         // texcoords
-        10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,  10.0f,  0.0f,
-        -10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,   0.0f,  0.0f,
-        -10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,   0.0f, 10.0f,
-
-        10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,  10.0f,  0.0f,
-        -10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,   0.0f, 10.0f,
-        10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,  10.0f, 10.0f
-    };
-
-
-
-
-    //-----------------------------------------------------
-
-    // cube VAO（箱子）
-    unsigned int cubeVBO, cubeVAO; //VBO：顶点缓冲对象的ID；VAO：顶点数组对象的ID；EBO：索引缓冲对象的ID
-
-    glGenVertexArrays(1, &cubeVAO); //创建1个 顶点数组对象
-    glGenBuffers(1, &cubeVBO); //创建1个 顶点缓冲对象
-    //    glGenBuffers(1, &EBO); //创建1个 索引缓冲对象
-    glBindVertexArray(cubeVAO); //绑定VAO
-
-    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO); //把顶点缓冲对象绑定到GL_ARRAY_BUFFER（顶点缓冲对象的缓冲类型）目标上
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW); //把 顶点数据vertices 复制到缓冲的内存中
-    //glBufferData参数：目标缓冲的类型（顶点缓冲），大小，数据，数据不会或几乎不会改变。
-
-
-    glEnableVertexAttribArray(0); //启用顶点属性0（顶点的 属性位置 = 0）
-    //位置属性 position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0); //告诉OpenGL该如何解析顶点数据
-    //参数：Location=0 ，3个值（坐标vec3），数据类型为GL_FLOAT，不标准化，步长（下个顶点组位置数据在6个float之后），起始位置的偏移量0
-
-
-    glEnableVertexAttribArray(1); //启用顶点属性1（顶点的 属性位置 = 1
-    //纹理属性 color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    //参数：Location=1 ，3个值（法向量），数据类型为GL_FLOAT，不标准化，步长（下个顶点组位置数据在6个float之后），起始位置的偏移量3个float
-
-    glBindVertexArray(0);
-
-    //纹理属性 texture coords attribute
-//    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-//    //参数：Location=1 ，3个值（法向量），数据类型为GL_FLOAT，不标准化，步长（下个顶点组位置数据在6个float之后），起始位置的偏移量3个float
-//    glEnableVertexAttribArray(2); //启用顶点属性1（顶点的 属性位置 = 1
-
-    //-----------------------------------------------------
-    // screen quad VAO (帧缓冲屏幕四边形)
-    unsigned int quadVAO, quadVBO;
-    glGenVertexArrays(1, &quadVAO);
-    glGenBuffers(1, &quadVBO);
-    glBindVertexArray(quadVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-
-    // skybox VAO（天空盒）
-    unsigned int skyboxVAO, skyboxVBO;
-    glGenVertexArrays(1, &skyboxVAO);
-    glGenBuffers(1, &skyboxVBO);
-    glBindVertexArray(skyboxVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-
-
-    // plane VAO
-    unsigned int planeVBO;
-    glGenVertexArrays(1, &planeVAO);
-    glGenBuffers(1, &planeVBO);
-    glBindVertexArray(planeVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glBindVertexArray(0);
-
-
-    //-----------------------------------------------------
-//    // 配置灯的VAO（VBO保持不变;灯光对象的顶点相同，也是3D立方体）
-    unsigned int lightVAO;
-    glGenVertexArrays(1, &lightVAO);
-    glBindVertexArray(lightVAO);
-
-    // 只需要绑定VBO不用再次设置VBO的数据，因为箱子的VBO数据中已经包含了正确的立方体顶点数据
-    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);//忽略后3个normal数据
-
-
-    //-----------------------------------------------------
-
-    //================================================================================
 
 
 
@@ -1008,11 +708,11 @@ int main()
 //////    char folderName[] ="/书/OGL_Test/材质/metalgrid2-ogl";
 ////
 ////
-    unsigned int albedoMap    = loadTexture(folderName, "/basecolor.png",NotFlip,Repeat,RGB);
-    unsigned int normalMap    = loadTexture(folderName, "/normal.png",NotFlip,Repeat,RGB);
-    unsigned int metallicMap  = loadTexture(folderName, "/metallic.png",NotFlip,Repeat,RGB);
-    unsigned int roughnessMap = loadTexture(folderName, "/roughness.png",NotFlip,Repeat,RGB);
-    unsigned int aoMap        = loadTexture(folderName, "/ao.png",NotFlip,Repeat,RGB);
+    unsigned int albedoMap    = GORK::LoadTexture(folderName, "/basecolor.png",NotFlip,Repeat,RGB);
+    unsigned int normalMap    = GORK::LoadTexture(folderName, "/normal.png",NotFlip,Repeat,RGB);
+    unsigned int metallicMap  = GORK::LoadTexture(folderName, "/metallic.png",NotFlip,Repeat,RGB);
+    unsigned int roughnessMap = GORK::LoadTexture(folderName, "/roughness.png",NotFlip,Repeat,RGB);
+    unsigned int aoMap        = GORK::LoadTexture(folderName, "/ao.png",NotFlip,Repeat,RGB);
     
     
     
@@ -1296,20 +996,20 @@ int main()
     
     char pathHead[] = "/书/OGL_Test";
     
-    unsigned int cubeTexture  = loadTexture(pathHead, "/container.jpg",Flip,Repeat,sRGB);
-    unsigned int containerTexture  = loadTexture(pathHead, "/container2.jpg",Flip,Repeat,sRGB);
-    unsigned int woodTexture = loadTexture(pathHead, "/wood.png",Flip,Repeat,sRGB);
-    unsigned int transparentTexture = loadTexture(pathHead, "/blending.png",Flip,Repeat,sRGB);
+    unsigned int cubeTexture  = GORK::LoadTexture(pathHead, "/container.jpg",Flip,Repeat,sRGB);
+    unsigned int containerTexture  = GORK::LoadTexture(pathHead, "/container2.jpg",Flip,Repeat,sRGB);
+    unsigned int woodTexture = GORK::LoadTexture(pathHead, "/wood.png",Flip,Repeat,sRGB);
+    unsigned int transparentTexture = GORK::LoadTexture(pathHead, "/blending.png",Flip,Repeat,sRGB);
 
-    unsigned int brickWallTexture = loadTexture(pathHead, "/brickwall.jpg",Flip,Repeat,sRGB);
-    unsigned int brickWall_Normal_Texture = loadTexture(pathHead, "/brickwall_normal.jpg",Flip,Repeat,RGB);
+    unsigned int brickWallTexture = GORK::LoadTexture(pathHead, "/brickwall.jpg",Flip,Repeat,sRGB);
+    unsigned int brickWall_Normal_Texture = GORK::LoadTexture(pathHead, "/brickwall_normal.jpg",Flip,Repeat,RGB);
 
-    unsigned int brickWallTexture2 = loadTexture(pathHead, "/bricks2.jpg",Flip,Repeat,sRGB);
-    unsigned int brickWall_Normal_Texture2 = loadTexture(pathHead, "/bricks2_normal.jpg",Flip,Repeat,sRGB);
-    unsigned int brickWall_Height_Texture2 = loadTexture(pathHead, "/bricks2_disp.jpg",Flip,Repeat,sRGB);
+    unsigned int brickWallTexture2 = GORK::LoadTexture(pathHead, "/bricks2.jpg",Flip,Repeat,sRGB);
+    unsigned int brickWall_Normal_Texture2 = GORK::LoadTexture(pathHead, "/bricks2_normal.jpg",Flip,Repeat,sRGB);
+    unsigned int brickWall_Height_Texture2 = GORK::LoadTexture(pathHead, "/bricks2_disp.jpg",Flip,Repeat,sRGB);
 
-    unsigned int toyBox_Normal_Texture2 = loadTexture(pathHead, "/toy_box_normal.png",Flip,Repeat,RGB);
-    unsigned int toyBox_Height_Texture2 = loadTexture(pathHead, "/toy_box_disp.png",Flip,Repeat,RGB);
+    unsigned int toyBox_Normal_Texture2 = GORK::LoadTexture(pathHead, "/toy_box_normal.png",Flip,Repeat,RGB);
+    unsigned int toyBox_Height_Texture2 = GORK::LoadTexture(pathHead, "/toy_box_disp.png",Flip,Repeat,RGB);
 
 
     vector<std::string> faces
@@ -1321,7 +1021,7 @@ int main()
         "/书/OGL_Test/skybox/front.jpg",
         "/书/OGL_Test/skybox/back.jpg"
     };
-    unsigned int skyboxTexture = loadCubemap(faces);
+    unsigned int skyboxTexture = GORK::LoadCubemap(faces);
     //================================================================================
 
 
@@ -2177,13 +1877,13 @@ int main()
 
     //=============================================================================
     // 取消所有资源的分配 optional: de-allocate all resources once they've outlived their purpose:
-    glDeleteVertexArrays(1, &cubeVAO);
-    glDeleteVertexArrays(1, &quadVAO);
-    glDeleteVertexArrays(1, &skyboxVAO);
+//    glDeleteVertexArrays(1, &cubeVAO);
+//    glDeleteVertexArrays(1, &quadVAO);
+//    glDeleteVertexArrays(1, &skyboxVAO);
 
-    glDeleteBuffers(1, &cubeVBO);
-    glDeleteBuffers(1, &quadVBO);
-    glDeleteBuffers(1, &skyboxVBO);
+//    glDeleteBuffers(1, &cubeVBO);
+//    glDeleteBuffers(1, &quadVBO);
+//    glDeleteBuffers(1, &skyboxVBO);
 
     //=============================================================================
 
@@ -2408,327 +2108,111 @@ void renderQuad()
 
 
 
-//// 使用手动计算的切向量在NDC中渲染1x1四边形 renders a 1x1 quad in NDC with manually calculated tangent vectors
-//// ------------------------------------------------------------------
-//unsigned int quadVAO = 0;
-//unsigned int quadVBO;
-//void renderQuad()
+//
+////加载纹理贴图
+//unsigned int loadTexture(char const * pathFolder, char const * pathLast, bool isFlipped, bool isRepeated, bool gammaCorrection)
 //{
-//    if (quadVAO == 0)
+//    char path[100];
+//    std::strcpy(path, pathFolder);
+//    std::strcat(path, pathLast);
+//
+//
+//    unsigned int textureID;
+//    glGenTextures(1, &textureID); //生成 1 个纹理，保存ID到textureID
+//
+//    int width, height, nrComponents;
+//
+//    if(isFlipped)
+//        stbi_set_flip_vertically_on_load(true); // 让stb_image.h在加载图片时翻转y轴
+//
+//    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0); //加载图片，得到长宽颜色通道信息
+//    if (data)
 //    {
-//        // positions
-//        glm::vec3 pos1(-1.0f,  1.0f, 0.0f);
-//        glm::vec3 pos2(-1.0f, -1.0f, 0.0f);
-//        glm::vec3 pos3( 1.0f, -1.0f, 0.0f);
-//        glm::vec3 pos4( 1.0f,  1.0f, 0.0f);
-//        // texture coordinates
-//        glm::vec2 uv1(0.0f, 1.0f);
-//        glm::vec2 uv2(0.0f, 0.0f);
-//        glm::vec2 uv3(1.0f, 0.0f);
-//        glm::vec2 uv4(1.0f, 1.0f);
-//        // normal vector
-//        glm::vec3 nm(0.0f, 0.0f, 1.0f);
+//        GLenum internalFormat;
+//        GLenum dataFormat;
+//        if (nrComponents == 1)
+//        {
+//            internalFormat = dataFormat = GL_RED;
+//        }
+//        else if (nrComponents == 3)
+//        {
+//            internalFormat = gammaCorrection ? GL_SRGB : GL_RGB;
+//            dataFormat = GL_RGB;
+//        }
+//        else {
+//            internalFormat = gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA;
+//            dataFormat = GL_RGBA;
+//        }
 //
+//        glBindTexture(GL_TEXTURE_2D, textureID); // 绑定纹理，接下来所有GL_TEXTURE_2D操作都是对此纹理
+//        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data); //生成一个纹理
+//        //参数：纹理目标GL_TEXTURE_2D，Mipmap级别0，纹理存储为RGB格式，宽度，高度，历史遗留总是0，使用RGB值加载，储存为char(byte)数组，图像数据
+//        glGenerateMipmap(GL_TEXTURE_2D); //自动生成所有需要的多级渐远纹理（Mipmap）
 //
+//        // 设置纹理环绕方式参数 set the texture wrapping parameters
+//        if(isRepeated){
+//            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+//            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+//        }else{
+//            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);//超出的部分会重复纹理坐标的边缘
+//            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//        }
 //
-//        // 计算两个三角形的切线/副切线向量 calculate tangent/bitangent vectors of both triangles
-//        // ==================================================================================
-//        glm::vec3 tangent1, bitangent1;
-//        glm::vec3 tangent2, bitangent2;
-//        // triangle 1
-//        // ----------
-//        glm::vec3 edge1 = pos2 - pos1;
-//        glm::vec3 edge2 = pos3 - pos1;
-//        glm::vec2 deltaUV1 = uv2 - uv1;
-//        glm::vec2 deltaUV2 = uv3 - uv1;
+//        // 设置纹理过滤参数 set texture filtering parameters
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);//纹理被缩小的时候使用Mipmap
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);//纹理被放大的时候使用线性过滤
 //
-//        GLfloat f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-//
-//        tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-//        tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-//        tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-//        tangent1 = glm::normalize(tangent1);
-//
-//        bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-//        bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-//        bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-//        bitangent1 = glm::normalize(bitangent1);
-//
-//        // triangle 2
-//        // ----------
-//        edge1 = pos3 - pos1;
-//        edge2 = pos4 - pos1;
-//        deltaUV1 = uv3 - uv1;
-//        deltaUV2 = uv4 - uv1;
-//
-//        f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-//
-//        tangent2.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-//        tangent2.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-//        tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-//        tangent2 = glm::normalize(tangent2);
-//
-//
-//        bitangent2.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-//        bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-//        bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-//        bitangent2 = glm::normalize(bitangent2);
-//        // ==================================================================================
-//
-//
-//
-//
-//        float quadVertices[] = {
-//            // positions                // normal           // texcoords    // tangent                              // bitangent
-//            pos1.x, pos1.y, pos1.z,     nm.x, nm.y, nm.z,   uv1.x, uv1.y,   tangent1.x, tangent1.y, tangent1.z,     bitangent1.x, bitangent1.y, bitangent1.z,
-//            pos2.x, pos2.y, pos2.z,     nm.x, nm.y, nm.z,   uv2.x, uv2.y,   tangent1.x, tangent1.y, tangent1.z,     bitangent1.x, bitangent1.y, bitangent1.z,
-//            pos3.x, pos3.y, pos3.z,     nm.x, nm.y, nm.z,   uv3.x, uv3.y,   tangent1.x, tangent1.y, tangent1.z,     bitangent1.x, bitangent1.y, bitangent1.z,
-//
-//            pos1.x, pos1.y, pos1.z,     nm.x, nm.y, nm.z,   uv1.x, uv1.y,   tangent2.x, tangent2.y, tangent2.z,     bitangent2.x, bitangent2.y, bitangent2.z,
-//            pos3.x, pos3.y, pos3.z,     nm.x, nm.y, nm.z,   uv3.x, uv3.y,   tangent2.x, tangent2.y, tangent2.z,     bitangent2.x, bitangent2.y, bitangent2.z,
-//            pos4.x, pos4.y, pos4.z,     nm.x, nm.y, nm.z,   uv4.x, uv4.y,   tangent2.x, tangent2.y, tangent2.z,     bitangent2.x, bitangent2.y, bitangent2.z
-//        };
-//        // configure plane VAO
-//        glGenVertexArrays(1, &quadVAO);
-//        glGenBuffers(1, &quadVBO);
-//        glBindVertexArray(quadVAO);
-//        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-//        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-//        glEnableVertexAttribArray(0);
-//        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)0);
-//        glEnableVertexAttribArray(1);
-//        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(3 * sizeof(float)));
-//        glEnableVertexAttribArray(2);
-//        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(6 * sizeof(float)));
-//        glEnableVertexAttribArray(3);
-//        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(8 * sizeof(float)));
-//        glEnableVertexAttribArray(4);
-//        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(11 * sizeof(float)));
+//        stbi_image_free(data); //生成了纹理和相应的Mipmap后，释放图像的内存
 //    }
-//    glBindVertexArray(quadVAO);
-//    glDrawArrays(GL_TRIANGLES, 0, 6);
-//    glBindVertexArray(0);
-//}
-
-
-
-
-//// renderQuad() renders a 1x1 XY quad in NDC
-//// -----------------------------------------
-//unsigned int quadVAO = 0;
-//unsigned int quadVBO;
-//void renderQuad()
-//{
-//    if (quadVAO == 0)
+//    else
 //    {
-//        float quadVertices[] = {
-//            // positions        // texture Coords
-//            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-//            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-//            1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-//            1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-//        };
-//        // setup plane VAO
-//        glGenVertexArrays(1, &quadVAO);
-//        glGenBuffers(1, &quadVBO);
-//        glBindVertexArray(quadVAO);
-//        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-//        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-//        glEnableVertexAttribArray(0);
-//        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-//        glEnableVertexAttribArray(1);
-//        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-//    }
-//    glBindVertexArray(quadVAO);
-//    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-//    glBindVertexArray(0);
-//}
-
-
-
-
-
-
-
-//// 在GLFW中实现一些输入控制：WSAD 和 esc
-//// --------------------------------------
-//void ProcessInput(GLFWwindow *window)
-//{
-//    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) //检查用户是否按下了返回键(Esc)
-//        glfwSetWindowShouldClose(window, true); //GLFW被要求退出（渲染循环时检查）
-//
-//    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-//        camera.ProcessKeyboard(FORWARD, deltaTime);
-//    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-//        camera.ProcessKeyboard(BACKWARD, deltaTime);
-//    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-//        camera.ProcessKeyboard(LEFT, deltaTime);
-//    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-//        camera.ProcessKeyboard(RIGHT, deltaTime);
-//
-//
-//    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !bloomKeyPressed)
-//    {
-//        bloom = !bloom;
-//        bloomKeyPressed = true;
-//    }
-//    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
-//    {
-//        bloomKeyPressed = false;
+//        std::cout << "Texture failed to load at path: " << path << std::endl;
+//        stbi_image_free(data);
 //    }
 //
-//    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-//    {
-//        if (exposure > 0.0f)
-//            exposure -= 0.001f;
-//        else
-//            exposure = 0.0f;
-//    }
-//    else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-//    {
-//        exposure += 0.001f;
-//    }
+//    return textureID;
 //
 //}
-
-//// 在每次窗口大小被调整的时候被调用 glfw: whenever the window size changed
-//// --------------------------------------
-//void Framebuffer_size_callback(GLFWwindow* window, int width, int height)
-//{
-//    glViewport(0, 0, width, height); //1,2参数控制窗口左下角的位置。3,4控制渲染窗口的宽度和高度（可以比GLFW的维度小）
-//}
-
-//// 鼠标移动 glfw: whenever the mouse moves, this callback is called
+//
+//
+//// loads a cubemap texture from 6 individual texture faces
+//// order:
+//// +X (right)// -X (left)// +Y (top)// -Y (bottom)// +Z (front)// -Z (back)
+////加载立方体贴图
 //// -------------------------------------------------------
-//void Mouse_callback(GLFWwindow* window, double xpos, double ypos)
+//unsigned int loadCubemap(vector<std::string> faces)
 //{
-//    if (firstMouse)
+//    unsigned int textureID;
+//    glGenTextures(1, &textureID);
+//    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+//
+//    stbi_set_flip_vertically_on_load(false); // 让stb_image.h在加载图片时翻转y轴
+//
+//    int width, height, nrChannels;
+//    for (unsigned int i = 0; i < faces.size(); i++)
 //    {
-//        lastX = xpos;
-//        lastY = ypos;
-//        firstMouse = false;
+//        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+//        if (data)
+//        {
+//            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+//            stbi_image_free(data);
+//        }
+//        else
+//        {
+//            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+//            stbi_image_free(data);
+//        }
 //    }
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 //
-//    float xoffset = xpos - lastX;
-//    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-//
-//    lastX = xpos;
-//    lastY = ypos;
-//
-//    camera.ProcessMouseMovement(xoffset * 3, yoffset * 3);
+//    return textureID;
 //}
 //
-//// 鼠标滑轮 glfw: whenever the mouse scroll wheel scrolls, this callback is called
-//// ----------------------------------------------------------------------
-//void Scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-//{
-//    camera.ProcessMouseScroll(yoffset);
-//}
-
-//加载纹理贴图
-unsigned int loadTexture(char const * pathFolder, char const * pathLast, bool isFlipped, bool isRepeated, bool gammaCorrection)
-{
-    char path[100];
-    std::strcpy(path, pathFolder);
-    std::strcat(path, pathLast);
-    
-    
-    unsigned int textureID;
-    glGenTextures(1, &textureID); //生成 1 个纹理，保存ID到textureID
-
-    int width, height, nrComponents;
-
-    if(isFlipped)
-        stbi_set_flip_vertically_on_load(true); // 让stb_image.h在加载图片时翻转y轴
-
-    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0); //加载图片，得到长宽颜色通道信息
-    if (data)
-    {
-        GLenum internalFormat;
-        GLenum dataFormat;
-        if (nrComponents == 1)
-        {
-            internalFormat = dataFormat = GL_RED;
-        }
-        else if (nrComponents == 3)
-        {
-            internalFormat = gammaCorrection ? GL_SRGB : GL_RGB;
-            dataFormat = GL_RGB;
-        }
-        else {
-            internalFormat = gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA;
-            dataFormat = GL_RGBA;
-        }
-
-        glBindTexture(GL_TEXTURE_2D, textureID); // 绑定纹理，接下来所有GL_TEXTURE_2D操作都是对此纹理
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data); //生成一个纹理
-        //参数：纹理目标GL_TEXTURE_2D，Mipmap级别0，纹理存储为RGB格式，宽度，高度，历史遗留总是0，使用RGB值加载，储存为char(byte)数组，图像数据
-        glGenerateMipmap(GL_TEXTURE_2D); //自动生成所有需要的多级渐远纹理（Mipmap）
-
-        // 设置纹理环绕方式参数 set the texture wrapping parameters
-        if(isRepeated){
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        }else{
-            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);//超出的部分会重复纹理坐标的边缘
-            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        }
-
-        // 设置纹理过滤参数 set texture filtering parameters
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);//纹理被缩小的时候使用Mipmap
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);//纹理被放大的时候使用线性过滤
-
-        stbi_image_free(data); //生成了纹理和相应的Mipmap后，释放图像的内存
-    }
-    else
-    {
-        std::cout << "Texture failed to load at path: " << path << std::endl;
-        stbi_image_free(data);
-    }
-
-    return textureID;
-
-}
-
-
-// loads a cubemap texture from 6 individual texture faces
-// order:
-// +X (right)// -X (left)// +Y (top)// -Y (bottom)// +Z (front)// -Z (back)
-//加载立方体贴图
-// -------------------------------------------------------
-unsigned int loadCubemap(vector<std::string> faces)
-{
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
-
-    stbi_set_flip_vertically_on_load(false); // 让stb_image.h在加载图片时翻转y轴
-    
-    int width, height, nrChannels;
-    for (unsigned int i = 0; i < faces.size(); i++)
-    {
-        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
-        if (data)
-        {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-            stbi_image_free(data);
-        }
-        else
-        {
-            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
-            stbi_image_free(data);
-        }
-    }
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-    return textureID;
-}
-
-
+//
 
 
 
